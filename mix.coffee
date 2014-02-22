@@ -1,22 +1,51 @@
-# Displays or alerts user of Plugmixer.
-console.log 'Mixing of playlists initialized!'
+class Mixer
+  playlists: null
+  selectedPlaylist: ->
+    for playlist in this.playlists
+      if playlist.dom.children('div.activate-button').css('display') == "block"
+        return playlist
+    return null
 
-# Event API listener.
-API.on API.DJ_ADVANCE, (obj) ->
+  activate: ->
+    _this = this
+    console.log 'Mixing of playlists initialized!'
+    this.loadPlaylists()
 
-  # When the user is the current DJ, activate another playlist.
-  if obj.dj.username == API.getUser().username
+    API.off API.DJ_ADVANCE, null # Turns off previous Mixer instances.
+    API.on API.DJ_ADVANCE, (obj) ->
+      if obj.dj.username == API.getUser().username
 
-    # Randomizes playlist activation.
-    l = $('#playlist-menu .menu .row').length
-    x = Math.floor(Math.random() * l)
+        # Randomizes playlist activation.
+        _this.selectRandomPlaylist()
 
-    # Activates playlist.
-    $('#playlist-menu .menu .row').eq(x).trigger("mouseup")
-    $('.activate-button').click()
+  selectPlaylist: (playlist) ->
+    playlist.dom.trigger("mouseup")
+    $('.activate-button').click() # Can only click all the activate buttons.
+    console.log 'New playlist ' + playlist.name + ' activated!'
+    API.chatLog 'Next playing from ' + playlist.name + '.'
+    return playlist
 
-    # Informs user of activated playlist in chat window.
-    name = $('#playlist-menu .menu .row').eq(x).children('.name').text()
-    console.log 'New playlist [' + name + '] activated!'
-    API.chatLog 'Next playing from ' + name + '.'
+  selectRandomPlaylist: ->
+    countSum = 0
+    for playlist in this.playlists
+      countSum += playlist.count
+    playlistCount = this.playlists.length
+    weightedSelect = Math.floor(Math.random() * countSum) + 1
+    for playlist in this.playlists
+      if weightedSelect < playlist.count
+        return this.selectPlaylist(playlist)
+      weightedSelect -= playlist.count
+    null
 
+  loadPlaylists: ->
+    playlistsDom = $('#playlist-menu div.row')
+    this.playlists = playlistsDom.map (i, pDom) ->
+      pJq = $(pDom)
+      {
+        name: pJq.children('span.name').text()
+        count: parseInt(pJq.children('span.count').text())
+        dom: pJq
+      }
+
+mixer = new Mixer
+mixer.activate()
