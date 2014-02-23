@@ -6,6 +6,13 @@ Mixer = (function() {
 
   Mixer.prototype.playlists = null;
 
+  Mixer.prototype.displayLabel = function() {
+    var mixerDisplay;
+    $('#plugmixer').remove();
+    mixerDisplay = '<div id="plugmixer" style="position: absolute; right: 16px; bottom: 4px;"> <span style="color: #90ad2f; font-size: 12px">PLUGMIXER</span> </div>';
+    return $('#room').append(mixerDisplay);
+  };
+
   Mixer.prototype.selectedPlaylist = function() {
     var playlist, _i, _len, _ref;
     _ref = this.playlists;
@@ -23,6 +30,7 @@ Mixer = (function() {
     _this = this;
     console.log('Mixing of playlists initialized!');
     this.loadPlaylists();
+    this.displayLabel();
     API.off(API.DJ_ADVANCE, null);
     return API.on(API.DJ_ADVANCE, function(obj) {
       if (obj.dj.username === API.getUser().username) {
@@ -34,7 +42,7 @@ Mixer = (function() {
   Mixer.prototype.selectPlaylist = function(playlist) {
     playlist.dom.trigger("mouseup");
     $('.activate-button').click();
-    console.log('New playlist ' + playlist.name + ' activated!');
+    console.log('Next playing from ' + playlist.name + '.');
     API.chatLog('Next playing from ' + playlist.name + '.');
     return playlist;
   };

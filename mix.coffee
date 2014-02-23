@@ -1,5 +1,14 @@
 class Mixer
   playlists: null
+
+  displayLabel: ->
+    $('#plugmixer').remove()
+    mixerDisplay = '<div id="plugmixer"
+    style="position: absolute; right: 16px; bottom: 4px;">
+    <span style="color: #90ad2f; font-size: 12px">PLUGMIXER</span>
+    </div>'
+    $('#room').append(mixerDisplay)
+
   selectedPlaylist: ->
     for playlist in this.playlists
       if playlist.dom.children('div.activate-button').css('display') == "block"
@@ -10,6 +19,7 @@ class Mixer
     _this = this
     console.log 'Mixing of playlists initialized!'
     this.loadPlaylists()
+    this.displayLabel()
 
     API.off API.DJ_ADVANCE, null # Turns off previous Mixer instances.
     API.on API.DJ_ADVANCE, (obj) ->
@@ -21,7 +31,7 @@ class Mixer
   selectPlaylist: (playlist) ->
     playlist.dom.trigger("mouseup")
     $('.activate-button').click() # Can only click all the activate buttons.
-    console.log 'New playlist ' + playlist.name + ' activated!'
+    console.log 'Next playing from ' + playlist.name + '.'
     API.chatLog 'Next playing from ' + playlist.name + '.'
     return playlist
 
