@@ -4,8 +4,22 @@ class Mixer
 
   playlists: null
 
-  displayLabel: ->
+  reset: ->
+    # displayLabel()
     $('#plugmixer').remove()
+
+    # activate()
+    API.off API.DJ_ADVANCE, null # Turns off previous Mixer instances.
+    # Should attach instanced function.
+
+    for playlist in this.playlists
+      # addTriggers()
+      playlist.dom.children('span.count').off("click", this.togglePlaylistStatus)
+
+      # togglePlaylistStatus()
+      playlist.dom.fadeTo(0.3, 1)
+
+  displayLabel: ->
     mixerDisplay = '<div id="plugmixer"
       style="position: absolute; right: 16px; bottom: 4px;">
       <span style="color: #90ad2f; font-size: 12px">PLUGMIXER</span>
@@ -20,7 +34,7 @@ class Mixer
 
   addTriggers: ->
     for playlist in this.playlists
-      playlist.dom.children('span.count').click playlist, this.togglePlaylistStatus
+      playlist.dom.children('span.count').click(playlist, this.togglePlaylistStatus)
 
   togglePlaylistStatus: (event) ->
     playlist = event.data
@@ -39,7 +53,6 @@ class Mixer
     this.addTriggers()
     this.displayLabel()
 
-    API.off API.DJ_ADVANCE, null # Turns off previous Mixer instances.
     API.on API.DJ_ADVANCE, (obj) ->
       if obj.dj.username == API.getUser().username
 
@@ -79,5 +92,7 @@ class Mixer
         dom: pJq
       }
 
+if (typeof mixer != 'undefined')
+  mixer.reset()
 mixer = new Mixer
 mixer.activate()

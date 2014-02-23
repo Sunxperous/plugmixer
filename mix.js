@@ -6,9 +6,22 @@ Mixer = (function() {
 
   Mixer.prototype.playlists = null;
 
+  Mixer.prototype.reset = function() {
+    var playlist, _i, _len, _ref, _results;
+    $('#plugmixer').remove();
+    API.off(API.DJ_ADVANCE, null);
+    _ref = this.playlists;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      playlist = _ref[_i];
+      playlist.dom.children('span.count').off("click", this.togglePlaylistStatus);
+      _results.push(playlist.dom.fadeTo(0.3, 1));
+    }
+    return _results;
+  };
+
   Mixer.prototype.displayLabel = function() {
     var mixerDisplay;
-    $('#plugmixer').remove();
     mixerDisplay = '<div id="plugmixer" style="position: absolute; right: 16px; bottom: 4px;"> <span style="color: #90ad2f; font-size: 12px">PLUGMIXER</span> </div>';
     return $('#room').append(mixerDisplay);
   };
@@ -56,7 +69,6 @@ Mixer = (function() {
     this.loadPlaylists();
     this.addTriggers();
     this.displayLabel();
-    API.off(API.DJ_ADVANCE, null);
     return API.on(API.DJ_ADVANCE, function(obj) {
       if (obj.dj.username === API.getUser().username) {
         return _this.selectRandomPlaylist();
@@ -115,6 +127,10 @@ Mixer = (function() {
   return Mixer;
 
 })();
+
+if (typeof mixer !== 'undefined') {
+  mixer.reset();
+}
 
 mixer = new Mixer;
 
