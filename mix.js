@@ -25,11 +25,36 @@ Mixer = (function() {
     return null;
   };
 
+  Mixer.prototype.addTriggers = function() {
+    var playlist, _i, _len, _ref, _results;
+    _ref = this.playlists;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      playlist = _ref[_i];
+      _results.push(playlist.dom.children('span.count').click(playlist, this.togglePlaylistStatus));
+    }
+    return _results;
+  };
+
+  Mixer.prototype.togglePlaylistStatus = function(event) {
+    var playlist;
+    playlist = event.data;
+    playlist.active = !playlist.active;
+    if (playlist.active) {
+      console.log('Activated ' + playlist.name + '.');
+      return playlist.dom.fadeTo(0.3, 1);
+    } else {
+      console.log('Deactivated ' + playlist.name + '.');
+      return playlist.dom.fadeTo(0.3, 0.4);
+    }
+  };
+
   Mixer.prototype.activate = function() {
     var _this;
     _this = this;
     console.log('Mixing of playlists initialized!');
     this.loadPlaylists();
+    this.addTriggers();
     this.displayLabel();
     API.off(API.DJ_ADVANCE, null);
     return API.on(API.DJ_ADVANCE, function(obj) {
@@ -47,17 +72,21 @@ Mixer = (function() {
     return playlist;
   };
 
+  Mixer.prototype.active = function(index) {
+    return this.active;
+  };
+
   Mixer.prototype.selectRandomPlaylist = function() {
     var countSum, playlist, playlistCount, weightedSelect, _i, _j, _len, _len1, _ref, _ref1;
     countSum = 0;
-    _ref = this.playlists;
+    _ref = this.playlists.filter(this.active);
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       playlist = _ref[_i];
       countSum += playlist.count;
     }
     playlistCount = this.playlists.length;
     weightedSelect = Math.floor(Math.random() * countSum) + 1;
-    _ref1 = this.playlists;
+    _ref1 = this.playlists.filter(this.active);
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       playlist = _ref1[_j];
       if (weightedSelect < playlist.count) {
@@ -77,6 +106,7 @@ Mixer = (function() {
       return {
         name: pJq.children('span.name').text(),
         count: parseInt(pJq.children('span.count').text()),
+        active: true,
         dom: pJq
       };
     });
