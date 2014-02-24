@@ -6,10 +6,42 @@ Mixer = (function() {
 
   Mixer.prototype.playlists = null;
 
+  Mixer.prototype.active = true;
+
+  Mixer.prototype.toggleStatus = function(event) {
+    var mixer;
+    mixer = event.data;
+    mixer.active = !mixer.active;
+    if (mixer.active) {
+      console.log('Activated Plugmixer.');
+      $('#plugmixer_status').children('span').text('Active');
+      $('#plugmixer_status').css('background-color', '#90ad2f');
+    } else {
+      console.log('Deactivated Plugmixer.');
+      $('#plugmixer_status').children('span').text('Inactive');
+      $('#plugmixer_status').css('background-color', '#c42e3b');
+    }
+    return mixer.apiEvent();
+  };
+
+  Mixer.prototype.mix = function(obj) {
+    if (obj.dj.username === API.getUser().username) {
+      return this.selectRandomPlaylist();
+    }
+  };
+
+  Mixer.prototype.apiEvent = function() {
+    if (this.active) {
+      return API.on(API.DJ_ADVANCE, this.mix, this);
+    } else {
+      return API.off(API.DJ_ADVANCE, this.mix, this);
+    }
+  };
+
   Mixer.prototype.reset = function() {
     var playlist, _i, _len, _ref, _results;
     $('#plugmixer').remove();
-    API.off(API.DJ_ADVANCE, null);
+    API.off(API.DJ_ADVANCE, this.mix);
     _ref = this.playlists;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -22,8 +54,9 @@ Mixer = (function() {
 
   Mixer.prototype.displayLabel = function() {
     var mixerDisplay;
-    mixerDisplay = '<div id="plugmixer" style="position: absolute; right: 16px; bottom: 4px;"> <span style="color: #90ad2f; font-size: 12px">PLUGMIXER</span> </div>';
-    return $('#room').append(mixerDisplay);
+    mixerDisplay = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #90ad2f; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>Active</span> </div> </div>';
+    $('#room').append(mixerDisplay);
+    return $('#plugmixer_status').click(this, this.toggleStatus);
   };
 
   Mixer.prototype.selectedPlaylist = function() {
@@ -52,12 +85,12 @@ Mixer = (function() {
   Mixer.prototype.togglePlaylistStatus = function(event) {
     var playlist;
     playlist = event.data;
-    playlist.active = !playlist.active;
-    if (playlist.active) {
-      console.log('Activated ' + playlist.name + '.');
+    playlist.enabled = !playlist.enabled;
+    if (playlist.enabled) {
+      console.log('Enabled ' + playlist.name + '.');
       return playlist.dom.fadeTo(0.3, 1);
     } else {
-      console.log('Deactivated ' + playlist.name + '.');
+      console.log('Disabled ' + playlist.name + '.');
       return playlist.dom.fadeTo(0.3, 0.4);
     }
   };
@@ -69,11 +102,7 @@ Mixer = (function() {
     this.loadPlaylists();
     this.addTriggers();
     this.displayLabel();
-    return API.on(API.DJ_ADVANCE, function(obj) {
-      if (obj.dj.username === API.getUser().username) {
-        return _this.selectRandomPlaylist();
-      }
-    });
+    return this.apiEvent();
   };
 
   Mixer.prototype.selectPlaylist = function(playlist) {
@@ -84,21 +113,21 @@ Mixer = (function() {
     return playlist;
   };
 
-  Mixer.prototype.active = function(index) {
-    return this.active;
+  Mixer.prototype.enabled = function(index) {
+    return this.enabled;
   };
 
   Mixer.prototype.selectRandomPlaylist = function() {
     var countSum, playlist, playlistCount, weightedSelect, _i, _j, _len, _len1, _ref, _ref1;
     countSum = 0;
-    _ref = this.playlists.filter(this.active);
+    _ref = this.playlists.filter(this.enabled);
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       playlist = _ref[_i];
       countSum += playlist.count;
     }
     playlistCount = this.playlists.length;
     weightedSelect = Math.floor(Math.random() * countSum) + 1;
-    _ref1 = this.playlists.filter(this.active);
+    _ref1 = this.playlists.filter(this.enabled);
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       playlist = _ref1[_j];
       if (weightedSelect < playlist.count) {
@@ -118,7 +147,7 @@ Mixer = (function() {
       return {
         name: pJq.children('span.name').text(),
         count: parseInt(pJq.children('span.count').text()),
-        active: true,
+        enabled: true,
         dom: pJq
       };
     });
