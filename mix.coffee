@@ -33,7 +33,8 @@ class Mixer
     $('#plugmixer').remove()
 
     # activate()
-    API.off(API.DJ_ADVANCE, this.mix) # Turns off previous Mixer instances.
+    this.active = false
+    this.apiEvent() # Turns off previous Mixer instances.
 
     for playlist in this.playlists
       # addTriggers()

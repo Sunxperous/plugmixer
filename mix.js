@@ -41,7 +41,8 @@ Mixer = (function() {
   Mixer.prototype.reset = function() {
     var playlist, _i, _len, _ref, _results;
     $('#plugmixer').remove();
-    API.off(API.DJ_ADVANCE, this.mix);
+    this.active = false;
+    this.apiEvent();
     _ref = this.playlists;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
