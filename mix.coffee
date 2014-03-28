@@ -1,3 +1,5 @@
+'use strict'
+
 class Mixer
   # Needs a reset method.
   # Pick randomly from first few music in activated playlist.
@@ -65,10 +67,13 @@ class Mixer
 
   addTriggers: ->
     for playlist in this.playlists
-      playlist.dom.children('span.count').click(playlist, this.togglePlaylistStatus)
+      playlist.dom.children('span.count').click({
+        playlists: this.playlists,
+        source: playlist
+      }, this.togglePlaylistStatus)
 
   togglePlaylistStatus: (event) ->
-    playlist = event.data
+    playlist = event.data.source
     playlist.enabled = !playlist.enabled
     if playlist.enabled
       console.log 'Enabled ' + playlist.name + '.'
@@ -76,6 +81,17 @@ class Mixer
     else
       console.log 'Disabled ' + playlist.name + '.'
       playlist.dom.fadeTo(0.3, 0.4)
+
+    playlists = $.makeArray(event.data.playlists).map (p) ->
+      return {
+        name: p.name,
+        enabled: p.enabled
+      }
+    playlists = JSON.stringify(playlists)
+    window.postMessage({method: 'save', playlists: playlists}, '*')
+    return
+
+  load: ->
 
   activate: ->
     _this = this
@@ -118,10 +134,23 @@ class Mixer
         enabled: true
         dom: pJq
       }
+    playlists = this.playlists
+    window.postMessage({method: 'load'}, '*')
+    window.addEventListener "message", (event) ->
+      return if event.source != window
+
+      if event.data.method == 'load_response' && event.data.load
+        loaded = JSON.parse(event.data.load.playlists)
+        console.log loaded
+        for playlist in playlists
+          for stored in loaded
+            if playlist.name == stored.name && !stored.enabled
+              playlist.enabled = stored.enabled
+              playlist.dom.fadeTo(0.3, 0.4)
 
 waitForAPI = ->
-  if typeof $ != 'undefined' && $('#playlist-menu div.row').length != 0
-    if typeof mixer != 'undefined'
+  if $? && $('#playlist-menu div.row').length != 0
+    if mixer?
       mixer.reset()
     mixer = new Mixer
     mixer.activate()

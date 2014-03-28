@@ -6,7 +6,8 @@
   "version": "0.1",
 
   "permissions": [
-    "http://plug.dj/"
+    "http://plug.dj/",
+    "storage"
   ],
   "content_scripts": [
     {
