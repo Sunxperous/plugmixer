@@ -119,7 +119,13 @@ class Mixer
         dom: pJq
       }
 
-if (typeof mixer != 'undefined')
-  mixer.reset()
-mixer = new Mixer
-mixer.activate()
+waitForAPI = ->
+  if typeof $ != 'undefined' && $('#playlist-menu div.row').length != 0
+    if typeof mixer != 'undefined'
+      mixer.reset()
+    mixer = new Mixer
+    mixer.activate()
+  else
+    setTimeout waitForAPI, 256
+
+waitForAPI()
