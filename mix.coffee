@@ -1,8 +1,6 @@
 'use strict'
 
 class Mixer
-  # Needs a reset method.
-  # Pick randomly from first few music in activated playlist.
 
   playlists: null
   active: true
@@ -11,11 +9,11 @@ class Mixer
     mixer = event.data
     mixer.active = !mixer.active
     if mixer.active
-      console.log('Activated Plugmixer.')
+      #console.log('Activated Plugmixer.')
       $('#plugmixer_status').children('span').text('Active')
       $('#plugmixer_status').css('background-color', '#90ad2f')
     else # Inactive.
-      console.log('Deactivated Plugmixer.')
+      #console.log('Deactivated Plugmixer.')
       $('#plugmixer_status').children('span').text('Inactive')
       $('#plugmixer_status').css('background-color', '#c42e3b')
     mixer.apiEvent()
@@ -76,10 +74,10 @@ class Mixer
     playlist = event.data.source
     playlist.enabled = !playlist.enabled
     if playlist.enabled
-      console.log 'Enabled ' + playlist.name + '.'
+      #console.log 'Enabled ' + playlist.name + '.'
       playlist.dom.fadeTo(0.3, 1)
     else
-      console.log 'Disabled ' + playlist.name + '.'
+      #console.log 'Disabled ' + playlist.name + '.'
       playlist.dom.fadeTo(0.3, 0.4)
 
     playlists = $.makeArray(event.data.playlists).map (p) ->
@@ -90,8 +88,6 @@ class Mixer
     playlists = JSON.stringify(playlists)
     window.postMessage({method: 'save', playlists: playlists}, '*')
     return
-
-  load: ->
 
   activate: ->
     _this = this
@@ -141,7 +137,7 @@ class Mixer
 
       if event.data.method == 'load_response' && event.data.load
         loaded = JSON.parse(event.data.load.playlists)
-        console.log loaded
+        #console.log loaded
         for playlist in playlists
           for stored in loaded
             if playlist.name == stored.name && !stored.enabled
