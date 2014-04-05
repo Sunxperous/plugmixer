@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": ["http://plug.dj/*"],
-      "js": ["inject.js"]
+      "js": ["contentscript.js"]
     }
   ],
   "web_accessible_resources": [
