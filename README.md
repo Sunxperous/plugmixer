@@ -1,4 +1,4 @@
-# Plugmixer
+# ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/icon48.png) Plugmixer
 
 #### Overcome the 200 item count limit in plug.dj playlists with this script!
 
@@ -18,14 +18,8 @@ Click on a playlist's __item count__ in the playlist menu to disable it. Disable
 
 Clicking on the __item count__ again enables the playlist.
 
-Note that playlist states are currently _not persistent_ across script loads. All playlists will be enabled on each script load.
+Note that playlist states are _not persistent_ across bookmarked script loads. All playlists will be re-enabled on each script load, and as such, also on each plug.dj refresh.
 
 ### Deactivating Plugmixer
 
 Click on the __Active__ button on the Plugmixer indicator to deactivate Plugmixer, but why would you do that?
-
----
-
-##### Contact
-
-Email bugs or suggestions to sunxperous at gmail.com.
