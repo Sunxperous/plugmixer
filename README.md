@@ -4,7 +4,7 @@
 
 This script allows you to play music from all your playlists without having to activate them manually. Each time you DJ, one playlist of yours will be activated randomly for your next turn.
 
-[![](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm)
+[![](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](http://bit.do/plugmixer)
 
 ## Bookmark script
 
@@ -22,7 +22,9 @@ Click on a playlist's __item count__ in the playlist menu to disable it. Disable
 
 Clicking on the __item count__ again enables the playlist.
 
-Note that playlist states are _not persistent_ across bookmarked script loads. All playlists will be re-enabled on each script load, and as such, also on each plug.dj refresh.
+Note that playlist states are _not persistent_ across __bookmarked script__ loads. All playlists will be re-enabled on each script load, and as such, also on each plug.dj refresh.
+
+Playlist states are _persistent_ on the Chrome extension.
 
 ### Deactivating Plugmixer
 
