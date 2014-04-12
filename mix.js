@@ -119,7 +119,7 @@ Mixer = (function() {
 
   Mixer.prototype.selectPlaylist = function(playlist) {
     playlist.dom.trigger("mouseup");
-    $('.activate-button').click();
+    $('.activate-button').eq(0).click();
     console.log('Next playing from ' + playlist.name + '.');
     API.chatLog('Next playing from ' + playlist.name + '.');
     return playlist;

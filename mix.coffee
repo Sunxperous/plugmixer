@@ -99,7 +99,7 @@ class Mixer
 
   selectPlaylist: (playlist) ->
     playlist.dom.trigger("mouseup")
-    $('.activate-button').click() # Can only click all the activate buttons.
+    $('.activate-button').eq(0).click() # Clicks one button, works for all playlists.
     console.log 'Next playing from ' + playlist.name + '.'
     API.chatLog 'Next playing from ' + playlist.name + '.'
     return playlist
