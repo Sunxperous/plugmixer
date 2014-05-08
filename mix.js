@@ -14,14 +14,22 @@ Plugmixer = (function() {
   active = true;
 
   Plugmixer.initialize = function() {
-    this.readPlaylists();
-    this.loadPlaylists();
-    this.displayLabel();
-    return API.on(API.DJ_ADVANCE, this.mix);
+    Plugmixer.readPlaylists();
+    Plugmixer.loadFromStorage();
+    Plugmixer.displayLabel();
+    return API.on(API.DJ_ADVANCE, Plugmixer.mix);
+  };
+
+  Plugmixer.saveStatus = function() {
+    return window.postMessage({
+      method: 'plugmixer_save_status',
+      status: active
+    }, '*');
   };
 
   Plugmixer.toggleStatus = function(event) {
     active = !active;
+    Plugmixer.saveStatus();
     if (active) {
       $('#plugmixer_status').children('span').text('Active');
       return $('#plugmixer_status').css('background-color', '#90ad2f');
@@ -35,7 +43,6 @@ Plugmixer = (function() {
     var playlist;
     if (obj.dj.username === API.getUser().username && active) {
       playlist = Plugmixer.getRandomPlaylist();
-      console.log(playlist);
       if (playlist != null) {
         return playlist.activate();
       }
@@ -46,7 +53,7 @@ Plugmixer = (function() {
     var mixerDisplay;
     mixerDisplay = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #90ad2f; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>Active</span> </div> </div>';
     $('#room').append(mixerDisplay);
-    return $('#plugmixer_status').click(this, this.toggleStatus);
+    return $('#plugmixer_status').click(Plugmixer, Plugmixer.toggleStatus);
   };
 
   Plugmixer.getRandomPlaylist = function() {
@@ -78,35 +85,33 @@ Plugmixer = (function() {
     });
   };
 
-  Plugmixer.loadPlaylists = function() {
+  Plugmixer.loadFromStorage = function() {
     window.postMessage({
-      method: 'load'
+      method: 'plugmixer_load_request'
     }, '*');
     return window.addEventListener("message", function(event) {
-      var playlist, savedPlaylist, savedPlaylists, _i, _len, _results;
+      var playlist, savedPlaylist, savedPlaylists, _i, _j, _len, _len1;
       if (event.source !== window) {
         return;
       }
-      if (event.data.method === 'load_response' && event.data.load) {
-        savedPlaylists = JSON.parse(event.data.load.playlists);
-        _results = [];
-        for (_i = 0, _len = playlists.length; _i < _len; _i++) {
-          playlist = playlists[_i];
-          _results.push((function() {
-            var _j, _len1, _results1;
-            _results1 = [];
+      if (event.data.method === 'plugmixer_load_response' && event.data) {
+        if (event.data.playlists != null) {
+          savedPlaylists = JSON.parse(event.data.playlists);
+          for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+            playlist = playlists[_i];
             for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
               savedPlaylist = savedPlaylists[_j];
               if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
-                _results1.push(playlist.disable());
-              } else {
-                _results1.push(void 0);
+                playlist.disable();
               }
             }
-            return _results1;
-          })());
+          }
         }
-        return _results;
+        if (event.data.status != null) {
+          if (active !== event.data.status) {
+            return Plugmixer.toggleStatus();
+          }
+        }
       }
     });
   };
@@ -121,7 +126,7 @@ Plugmixer = (function() {
     });
     playlistsCondensed = JSON.stringify(playlistsCondensed);
     window.postMessage({
-      method: 'save',
+      method: 'plugmixer_save_playlists',
       playlists: playlistsCondensed
     }, '*');
   };

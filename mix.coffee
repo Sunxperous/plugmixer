@@ -6,14 +6,21 @@ class Plugmixer
   playlists = null
   active = true
 
-  @initialize: () ->
+  @initialize: =>
     @readPlaylists()
-    @loadPlaylists()
+    @loadFromStorage()
     @displayLabel()
     API.on(API.DJ_ADVANCE, @mix) 
 
-  @toggleStatus: (event) ->
+  @saveStatus: =>
+    window.postMessage(
+      method: 'plugmixer_save_status',
+      status: active
+    , '*')
+
+  @toggleStatus: (event) =>
     active = !active
+    @saveStatus()
     if active
       $('#plugmixer_status').children('span').text('Active')
       $('#plugmixer_status').css('background-color', '#90ad2f')
@@ -24,10 +31,9 @@ class Plugmixer
   @mix: (obj) =>
     if obj.dj.username == API.getUser().username and active
       playlist = @getRandomPlaylist()
-      console.log playlist
       if playlist? then playlist.activate()
 
-  @displayLabel = ->
+  @displayLabel = =>
     mixerDisplay = '<div id="plugmixer"
       style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;">
         <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;">
@@ -41,7 +47,7 @@ class Plugmixer
     $('#room').append(mixerDisplay)
     $('#plugmixer_status').click(@, @toggleStatus)
 
-  @getRandomPlaylist: ->
+  @getRandomPlaylist: =>
     countSum = 0
     for playlist in playlists.filter Playlist.isEnabled
       countSum += playlist.count
@@ -53,31 +59,38 @@ class Plugmixer
       weightedSelect -= playlist.count
     null
 
-  @readPlaylists: ->
+  @readPlaylists: =>
     playlistsDom = $('#playlist-menu div.row')
     playlists = playlistsDom.map (i, pDom) ->
       new Playlist($(pDom))
 
-  @loadPlaylists: ->
-    window.postMessage({method: 'load'}, '*')
-    window.addEventListener "message", (event) ->
+  @loadFromStorage: =>
+    window.postMessage({method: 'plugmixer_load_request'}, '*')
+    window.addEventListener "message", (event) =>
       return if event.source != window
 
-      if event.data.method == 'load_response' && event.data.load
-        savedPlaylists = JSON.parse(event.data.load.playlists)
-        for playlist in playlists
-          for savedPlaylist in savedPlaylists
-            if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
-              playlist.disable()
+      if event.data.method == 'plugmixer_load_response' && event.data
+        if event.data.playlists?
+          savedPlaylists = JSON.parse(event.data.playlists)
+          for playlist in playlists
+            for savedPlaylist in savedPlaylists
+              if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
+                playlist.disable()
+        if event.data.status?
+          if active != event.data.status
+            @toggleStatus()
 
-  @savePlaylists: ->
+  @savePlaylists: =>
     playlistsCondensed = $.makeArray(playlists).map (playlist) ->
       return {
         name: playlist.name,
         enabled: playlist.enabled
       }
     playlistsCondensed = JSON.stringify(playlistsCondensed)
-    window.postMessage({method: 'save', playlists: playlistsCondensed}, '*')
+    window.postMessage(
+      method: 'plugmixer_save_playlists',
+      playlists: playlistsCondensed
+    , '*')
     return
 
 

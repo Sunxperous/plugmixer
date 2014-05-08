@@ -13,17 +13,23 @@ window.addEventListener("message", function(event) {
     return;
   }
   if (event.data.method) {
-    if (event.data.method === 'save') {
-      return chrome.storage.sync.set({
-        'playlists': event.data.playlists
-      });
-    } else if (event.data.method === 'load') {
-      return chrome.storage.sync.get('playlists', function(data) {
-        return window.postMessage({
-          method: 'load_response',
-          load: data
-        }, '*');
-      });
+    switch (event.data.method) {
+      case 'plugmixer_save_playlists':
+        return chrome.storage.sync.set({
+          'playlists': event.data.playlists
+        });
+      case 'plugmixer_save_status':
+        return chrome.storage.sync.set({
+          'status': event.data.status
+        });
+      case 'plugmixer_load_request':
+        return chrome.storage.sync.get(['playlists', 'status'], function(data) {
+          return window.postMessage({
+            method: 'plugmixer_load_response',
+            playlists: data['playlists'],
+            status: data['status']
+          }, '*');
+        });
     }
   }
 });
