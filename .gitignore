@@ -2,3 +2,5 @@
 *.ini
 *.zip
 misc/
+*sublime-project
+*sublime-workspace

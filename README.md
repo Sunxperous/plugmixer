@@ -4,7 +4,7 @@
 
 This plug.dj script/extension allows you to play music from two or more of your playlists without having to activate them manually. Each time you DJ, one playlist will be activated randomly for your next turn.
 
-[![](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](http://bit.do/plugmixer)
+[![](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm)
 
 ## Bookmark script
 
