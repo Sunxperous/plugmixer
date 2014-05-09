@@ -4,6 +4,9 @@ inject = document.createElement 'script'
 inject.src = chrome.extension.getURL 'mix.js'
 (document.head || document.documentElement).appendChild inject
 
+chrome.runtime.sendMessage("plugmixer_show_icon")
+console.log Date.now()
+
 window.addEventListener "message", (event) ->
   return if event.source != window
 
