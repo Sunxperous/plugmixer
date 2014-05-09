@@ -1,15 +1,26 @@
 'use strict'
 
 class Plugmixer
-  @INITIALIZATION_TIMEOUT = 256
+  @INITIALIZATION_TIMER = 256
+  @INITIALIZATION_TTL = 192
 
   playlists = null
   active = true
+  indicator = '<div id="plugmixer"
+    style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;">
+      <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;">
+        <span>PLUGMIXER</span>
+      </div>
+      <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #90ad2f; border-radius: 0 3px 3px 0;
+      font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;">
+        <span>Active</span>
+      </div>
+    </div>'
 
   @initialize: =>
     @readPlaylists()
     @loadFromStorage()
-    @displayLabel()
+    @displayIndicator()
     API.on(API.DJ_ADVANCE, @mix) 
 
   @saveStatus: =>
@@ -33,18 +44,8 @@ class Plugmixer
       playlist = @getRandomPlaylist()
       if playlist? then playlist.activate()
 
-  @displayLabel = =>
-    mixerDisplay = '<div id="plugmixer"
-      style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;">
-        <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;">
-          <span>PLUGMIXER</span>
-        </div>
-        <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #90ad2f; border-radius: 0 3px 3px 0;
-        font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;">
-          <span>Active</span>
-        </div>
-      </div>'
-    $('#room').append(mixerDisplay)
+  @displayIndicator = =>
+    $('#room').append(indicator)
     $('#plugmixer_status').click(@, @toggleStatus)
 
   @getRandomPlaylist: =>
@@ -130,10 +131,13 @@ class Plugmixer
       $('.activate-button').eq(0).click() # Clicks one button, works for all playlists.
       API.chatLog 'Next playing from ' + @name + '.'
 
+ttl = 0
 waitForAPI = ->
+  ttl++
   if $? && $('#playlist-menu div.row').length != 0
     Plugmixer.initialize()
-  else
-    setTimeout waitForAPI, Plugmixer.INITIALIZATION_TIMEOUT
+  else if ttl <= Plugmixer.INITIALIZATION_TTL
+    console.log "waiting for playlists..."
+    setTimeout waitForAPI, Plugmixer.INITIALIZATION_TIMER
 
 waitForAPI()
