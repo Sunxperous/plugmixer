@@ -5,7 +5,7 @@ class Plugmixer
   @INITIALIZATION_TTL = 192
 
   playlists = null
-  active = true
+  active = false
   indicator = '<div id="plugmixer"
     style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;">
       <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;">
@@ -25,7 +25,7 @@ class Plugmixer
 
   @saveStatus: =>
     window.postMessage(
-      method: 'plugmixer_save_status',
+      method: 'plugmixer_status_change',
       status: active
     , '*')
 
@@ -77,9 +77,8 @@ class Plugmixer
             for savedPlaylist in savedPlaylists
               if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
                 playlist.disable()
-        if event.data.status?
-          if active != event.data.status
-            @toggleStatus()
+        if !event.data.status? or active != event.data.status
+          @toggleStatus()
 
   @savePlaylists: =>
     playlistsCondensed = $.makeArray(playlists).map (playlist) ->

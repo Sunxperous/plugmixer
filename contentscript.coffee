@@ -4,8 +4,7 @@ inject = document.createElement 'script'
 inject.src = chrome.extension.getURL 'mix.js'
 (document.head || document.documentElement).appendChild inject
 
-chrome.runtime.sendMessage("plugmixer_show_icon")
-console.log Date.now()
+chrome.runtime.sendMessage("plugmixer_inactive_icon")
 
 window.addEventListener "message", (event) ->
   return if event.source != window
@@ -15,9 +14,13 @@ window.addEventListener "message", (event) ->
       when 'plugmixer_save_playlists'
         chrome.storage.sync.set
           'playlists': event.data.playlists
-      when 'plugmixer_save_status'
+      when 'plugmixer_status_change'
         chrome.storage.sync.set
           'status': event.data.status
+        if event.data.status # Active
+          chrome.runtime.sendMessage("plugmixer_active_icon")
+        else # Inactive
+          chrome.runtime.sendMessage("plugmixer_inactive_icon")
       when 'plugmixer_load_request'
         chrome.storage.sync.get [
           'playlists',

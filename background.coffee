@@ -1,3 +1,16 @@
 chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
-  console.log Date.now()
-  chrome.pageAction.show(sender.tab.id)
+  switch message
+    when "plugmixer_inactive_icon"
+      chrome.pageAction.setIcon 
+        "tabId": sender.tab.id,
+        "path":
+          "19": "icon19bw.png",
+          "38": "icon38bw.png"
+      chrome.pageAction.show(sender.tab.id)
+    when "plugmixer_active_icon"
+      chrome.pageAction.setIcon 
+        "tabId": sender.tab.id,
+        "path":
+          "19": "icon19.png",
+          "38": "icon38.png"
+      chrome.pageAction.show(sender.tab.id)
