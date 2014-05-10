@@ -3,7 +3,7 @@
 var Plugmixer, ttl, waitForAPI;
 
 Plugmixer = (function() {
-  var Playlist, active, indicator, playlists;
+  var Playlist, active, indicator, playlists, status;
 
   function Plugmixer() {}
 
@@ -13,9 +13,11 @@ Plugmixer = (function() {
 
   playlists = null;
 
-  active = false;
+  active = true;
 
-  indicator = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #90ad2f; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>Active</span> </div> </div>';
+  indicator = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #444a59; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>...</span> </div> </div>';
+
+  status = null;
 
   Plugmixer.initialize = function() {
     Plugmixer.readPlaylists();
@@ -31,16 +33,25 @@ Plugmixer = (function() {
     }, '*');
   };
 
+  Plugmixer.makeActive = function() {
+    active = true;
+    status.children('span').text('Active');
+    return status.css('background-color', '#90ad2f');
+  };
+
+  Plugmixer.makeInactive = function() {
+    active = false;
+    status.children('span').text('Inactive');
+    return status.css('background-color', '#c42e3b');
+  };
+
   Plugmixer.toggleStatus = function(event) {
-    active = !active;
-    Plugmixer.saveStatus();
     if (active) {
-      $('#plugmixer_status').children('span').text('Active');
-      return $('#plugmixer_status').css('background-color', '#90ad2f');
+      Plugmixer.makeInactive();
     } else {
-      $('#plugmixer_status').children('span').text('Inactive');
-      return $('#plugmixer_status').css('background-color', '#c42e3b');
+      Plugmixer.makeActive();
     }
+    return Plugmixer.saveStatus();
   };
 
   Plugmixer.mix = function(obj) {
@@ -55,7 +66,8 @@ Plugmixer = (function() {
 
   Plugmixer.displayIndicator = function() {
     $('#room').append(indicator);
-    return $('#plugmixer_status').click(Plugmixer, Plugmixer.toggleStatus);
+    status = $('#plugmixer_status');
+    return status.click(Plugmixer, Plugmixer.toggleStatus);
   };
 
   Plugmixer.getRandomPlaylist = function() {
@@ -109,8 +121,10 @@ Plugmixer = (function() {
             }
           }
         }
-        if ((event.data.status == null) || active !== event.data.status) {
-          return Plugmixer.toggleStatus();
+        if ((event.data.status == null) || event.data.status) {
+          return Plugmixer.makeActive();
+        } else {
+          return Plugmixer.makeInactive();
         }
       }
     });

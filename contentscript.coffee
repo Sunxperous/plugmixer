@@ -31,3 +31,5 @@ window.addEventListener "message", (event) ->
               playlists: data['playlists'],
               status: data['status']
             , '*')
+            if data.status # Active
+              chrome.runtime.sendMessage("plugmixer_active_icon")

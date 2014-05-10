@@ -32,11 +32,14 @@ window.addEventListener("message", function(event) {
         break;
       case 'plugmixer_load_request':
         return chrome.storage.sync.get(['playlists', 'status'], function(data) {
-          return window.postMessage({
+          window.postMessage({
             method: 'plugmixer_load_response',
             playlists: data['playlists'],
             status: data['status']
           }, '*');
+          if (data.status) {
+            return chrome.runtime.sendMessage("plugmixer_active_icon");
+          }
         });
     }
   }
