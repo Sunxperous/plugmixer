@@ -45,7 +45,7 @@ class Plugmixer
     @saveStatus()
 
   @mix: (obj) =>
-    if obj.dj.username == API.getUser().username and active
+    if obj.dj? and obj.dj.username == API.getUser().username and active
       playlist = @getRandomPlaylist()
       if playlist? then playlist.activate()
 
@@ -144,4 +144,4 @@ waitForAPI = ->
     console.log "waiting for playlists..."
     setTimeout waitForAPI, Plugmixer.INITIALIZATION_TIMER
 
-waitForAPI()
+  waitForAPI()

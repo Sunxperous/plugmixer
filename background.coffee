@@ -14,3 +14,9 @@ chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
           "19": "icon19.png",
           "38": "icon38.png"
       chrome.pageAction.show(sender.tab.id)
+
+chrome.runtime.onInstalled.addListener (details) ->
+  chrome.storage.sync.get ['status'], (data) ->
+    if !data.status?
+      chrome.storage.sync.set
+        'status': true

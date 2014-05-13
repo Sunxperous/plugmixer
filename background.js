@@ -21,3 +21,13 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
       return chrome.pageAction.show(sender.tab.id);
   }
 });
+
+chrome.runtime.onInstalled.addListener(function(details) {
+  return chrome.storage.sync.get(['status'], function(data) {
+    if (data.status == null) {
+      return chrome.storage.sync.set({
+        'status': true
+      });
+    }
+  });
+});
