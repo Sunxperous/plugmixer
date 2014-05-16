@@ -84,6 +84,8 @@ class Plugmixer
               if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
                 playlist.disable()
         if !event.data.status? or event.data.status then @makeActive() else @makeInactive()
+      else if event.data.method == 'plugmixer_icon_clicked'
+        @toggleStatus()
 
   @savePlaylists: =>
     playlistsCondensed = $.makeArray(playlists).map (playlist) ->
@@ -144,4 +146,4 @@ waitForAPI = ->
     console.log "waiting for playlists..."
     setTimeout waitForAPI, Plugmixer.INITIALIZATION_TIMER
 
-  waitForAPI()
+waitForAPI()

@@ -10,6 +10,15 @@ inject.src = chrome.extension.getURL('mix.js');
 
 chrome.runtime.sendMessage("plugmixer_inactive_icon");
 
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
+  console.log(message);
+  if (message === 'icon_clicked') {
+    return window.postMessage({
+      method: 'plugmixer_icon_clicked'
+    }, '*');
+  }
+});
+
 window.addEventListener("message", function(event) {
   if (event.source !== window) {
     return;

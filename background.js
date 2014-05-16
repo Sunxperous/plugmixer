@@ -31,3 +31,9 @@ chrome.runtime.onInstalled.addListener(function(details) {
     }
   });
 });
+
+chrome.pageAction.onClicked.addListener(function(tab) {
+  return chrome.tabs.sendMessage(tab.id, 'icon_clicked', function(response) {
+    return console.log(response);
+  });
+});
