@@ -1,18 +1,23 @@
+INACTIVE_ICON_19 = 'images/icon19bw.png'
+INACTIVE_ICON_38 = 'images/icon38bw.png'
+ACTIVE_ICON_19 = 'images/icon19.png'
+ACTIVE_ICON_38 = 'images/icon38.png'
+
 chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
   switch message
     when "plugmixer_inactive_icon"
       chrome.pageAction.setIcon 
         "tabId": sender.tab.id,
         "path":
-          "19": "icon19bw.png",
-          "38": "icon38bw.png"
+          "19": INACTIVE_ICON_19,
+          "38": INACTIVE_ICON_38
       chrome.pageAction.show(sender.tab.id)
     when "plugmixer_active_icon"
       chrome.pageAction.setIcon 
         "tabId": sender.tab.id,
         "path":
-          "19": "icon19.png",
-          "38": "icon38.png"
+          "19": ACTIVE_ICON_19,
+          "38": ACTIVE_ICON_38
       chrome.pageAction.show(sender.tab.id)
 
 chrome.runtime.onInstalled.addListener (details) ->
