@@ -2,11 +2,66 @@
 <html>
 <head>
   <title>Plugmixer Options</title>
+  <style type="text/css">
+    body {
+      text-align: center;
+      background-color: #000;
+      color: #fff;
+      font-family: sans-serif;
+    }
+    #indicator_wrapper {
+      text-align: center;
+      padding: 12px;
+    }
+    label {
+      display: block;
+    }
+    #indicator_wrapper div {
+      display: inline-block;
+    }
+    input[type="radio"] {
+      display: none;
+    }
+    input[type="radio"]:checked + label {
+      background-color: #6a6;
+    }
+    label {
+      display: block;
+      height: 40px;
+      line-height: 40px;
+      width: 200px;
+      vertical-align: middle;
+      border-radius: 8px;
+      border: 1px #fff solid;
+    }
+    button {
+      width: 100px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px #fff solid;
+      cursor: pointer;
+    }
+    button:active {
+      background-color: #999;
+    }
+  </style>
 </head>
 <body>
-  <input type="radio" name="indicator" value="addressbar">Address bar
-  <input type="radio" name="indicator" value="both">Both
-  <input type="radio" name="indicator" value="interfacebutton">Interface button
+  <div id="indicator_wrapper">
+    <h2>Indicator display</h2>
+    <div>
+      <input type="radio" name="indicator" value="addressbar" id="address_bar">
+      <label for="address_bar"><span>Address bar</span></label>
+    </div>
+    <div>
+      <input type="radio" name="indicator" value="both" id="both">
+      <label for="both">Both</label>
+    </div>
+    <div>
+      <input type="radio" name="indicator" value="interfacebutton" id="interface_button">
+      <label for="interface_button">Room interface</label>
+    </div>
+  </div>
   <button id="save">Save</button>
   <script src="options.js"></script>
 </body>
