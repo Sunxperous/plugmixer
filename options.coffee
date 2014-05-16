@@ -13,3 +13,9 @@ document.getElementById('save').addEventListener 'click', ->
       indicator = radio.value
       chrome.storage.sync.set
         indicator: indicator
+        , ->
+          document.getElementById('save').innerText = 'Saved'
+
+for label in document.getElementsByTagName('label')
+  label.addEventListener 'click', ->
+    document.getElementById('save').innerText = 'Save'
