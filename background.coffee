@@ -20,6 +20,7 @@ chrome.runtime.onInstalled.addListener (details) ->
     if !data.status?
       chrome.storage.sync.set
         'status': true
+        'indicator': 'both'
 
 chrome.pageAction.onClicked.addListener (tab) ->
   chrome.tabs.sendMessage tab.id, 'icon_clicked', (response) ->
