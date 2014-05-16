@@ -6,8 +6,10 @@ class Plugmixer
 
   playlists = null
   active = true
+  indicatorOption = null
+
   indicator = '<div id="plugmixer"
-    style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;">
+    style="position: absolute; right: 6px; bottom: 2px; font-size: 11px; display: none;">
       <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;">
         <span>PLUGMIXER</span>
       </div>
@@ -84,6 +86,10 @@ class Plugmixer
               if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
                 playlist.disable()
         if !event.data.status? or event.data.status then @makeActive() else @makeInactive()
+        if event.data.indicator?
+          indicatorOption = event.data.indicator  
+          if indicatorOption != 'addressbar'
+            $('#plugmixer').css('display', 'block')        
       else if event.data.method == 'plugmixer_icon_clicked'
         @toggleStatus()
 

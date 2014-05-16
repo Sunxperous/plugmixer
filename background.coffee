@@ -23,4 +23,3 @@ chrome.runtime.onInstalled.addListener (details) ->
 
 chrome.pageAction.onClicked.addListener (tab) ->
   chrome.tabs.sendMessage tab.id, 'icon_clicked', (response) ->
-    console.log response

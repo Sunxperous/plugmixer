@@ -3,7 +3,7 @@
 var Plugmixer, ttl, waitForAPI;
 
 Plugmixer = (function() {
-  var Playlist, active, indicator, playlists, status;
+  var Playlist, active, indicator, indicatorOption, playlists, status;
 
   function Plugmixer() {}
 
@@ -15,7 +15,9 @@ Plugmixer = (function() {
 
   active = true;
 
-  indicator = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #444a59; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>...</span> </div> </div>';
+  indicatorOption = null;
+
+  indicator = '<div id="plugmixer" style="position: absolute; right: 6px; bottom: 2px; font-size: 11px; display: none;"> <div style="display: inline-block; background-color: #282c35; padding: 1px 8px; border-radius: 3px 0 0 3px; margin-right: -4px;"> <span>PLUGMIXER</span> </div> <div id="plugmixer_status" style="display: inline-block; padding: 1px 4px; background-color: #444a59; border-radius: 0 3px 3px 0; font-weight:600; letter-spacing:0.05em; width:60px; text-align:center; cursor: pointer;"> <span>...</span> </div> </div>';
 
   status = null;
 
@@ -122,9 +124,15 @@ Plugmixer = (function() {
           }
         }
         if ((event.data.status == null) || event.data.status) {
-          return Plugmixer.makeActive();
+          Plugmixer.makeActive();
         } else {
-          return Plugmixer.makeInactive();
+          Plugmixer.makeInactive();
+        }
+        if (event.data.indicator != null) {
+          indicatorOption = event.data.indicator;
+          if (indicatorOption !== 'addressbar') {
+            return $('#plugmixer').css('display', 'block');
+          }
         }
       } else if (event.data.method === 'plugmixer_icon_clicked') {
         return Plugmixer.toggleStatus();
