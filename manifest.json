@@ -3,7 +3,7 @@
 
   "name": "Plugmixer",
   "description": "Overcome the 200 item count limit in plug.dj playlists!",
-  "version": "0.21",
+  "version": "1.0.0",
 
   "permissions": [
     "http://plug.dj/",
@@ -16,11 +16,11 @@
   "content_scripts": [
     {
       "matches": ["http://plug.dj/*"],
-      "js": ["contentscript.js"]
+      "js": ["jquery-2.1.1.min.js","contentscript.js"]
     }
   ],
   "web_accessible_resources": [
-    "mix.js"
+    "apimessenger.js"
   ],
   "icons": {
     "16": "images/icon16.png",
@@ -29,8 +29,8 @@
   },
   "page_action": {
     "default_icon": {
-      "19": "images/icon19bw.png",
-      "38": "images/icon38bw.png"
+      "19": "images/icon19.png",
+      "38": "images/icon38.png"
     },
     "default_title": "Plugmixer"
   },
