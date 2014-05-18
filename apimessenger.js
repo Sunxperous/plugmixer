@@ -12,7 +12,7 @@ window.postMessage({
 }, '*');
 
 window.addEventListener('message', function(event) {
-  if (event.data.about === 'plugmixer_send_chat') {
+  if ((event.data.about != null) && event.data.about === 'plugmixer_send_chat') {
     return API.chatLog(event.data.message);
   }
 });

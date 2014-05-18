@@ -12,7 +12,7 @@ ACTIVE_ICON_38 = 'images/icon38.png';
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
   switch (message) {
-    case "plugmixer_inactive_icon":
+    case "plugmixer_make_inactive":
       chrome.pageAction.setIcon({
         "tabId": sender.tab.id,
         "path": {
@@ -20,8 +20,12 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
           "38": INACTIVE_ICON_38
         }
       });
-      return chrome.pageAction.show(sender.tab.id);
-    case "plugmixer_active_icon":
+      chrome.pageAction.show(sender.tab.id);
+      return chrome.pageAction.setTitle({
+        'tabId': sender.tab.id,
+        'title': 'Plugmixer (inactive)'
+      });
+    case "plugmixer_make_active":
       chrome.pageAction.setIcon({
         "tabId": sender.tab.id,
         "path": {
@@ -29,20 +33,12 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
           "38": ACTIVE_ICON_38
         }
       });
-      return chrome.pageAction.show(sender.tab.id);
+      chrome.pageAction.show(sender.tab.id);
+      return chrome.pageAction.setTitle({
+        'tabId': sender.tab.id,
+        'title': 'Plugmixer'
+      });
   }
 });
 
-chrome.runtime.onInstalled.addListener(function(details) {
-  return chrome.storage.sync.get(['status'], function(data) {
-    if (data.status == null) {
-      return chrome.storage.sync.set({
-        'status': true
-      });
-    }
-  });
-});
-
-chrome.pageAction.onClicked.addListener(function(tab) {
-  return chrome.tabs.sendMessage(tab.id, 'plugmixer_icon_clicked', function(response) {});
-});
+chrome.runtime.onInstalled.addListener(function(details) {});

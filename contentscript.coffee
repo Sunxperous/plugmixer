@@ -18,6 +18,7 @@ class Plugmixer
   playlists = null
   active = true
   userId = null
+  userData = {}
 
   @initialize: =>
     # Read playlists.
@@ -25,42 +26,37 @@ class Plugmixer
     playlists = playlistsDom.map (i, pDom) ->
       new Playlist($(pDom))
 
+    # Listeners.
+    window.addEventListener 'message', @listenFromMessenger
+    chrome.runtime.onMessage.addListener @listenFromBackground
+
     # Inject apimessenger.js.
     inject = document.createElement 'script'
     inject.src = chrome.extension.getURL 'apimessenger.js'
     (document.head || document.documentElement).appendChild inject
 
-    # Retrieve user id.
-    window.addEventListener 'message', =>
-      handler = (event) =>
-        if event.data.about? and event.data.about == 'plugmixer_user_info'
-          userId = event.data.userId
-          window.removeEventListener 'message', handler
-      return handler
-    
-    @load()
-
-    window.addEventListener 'message', @listenFromMessenger
-    chrome.runtime.onMessage.addListener @listenFromBackground
-
   @listenFromBackground: (message, sender, sendResponseTo) =>
-    if message == 'plugmixer_icon_clicked'
+    if message == 'plugmixer_toggle_status'
       @toggleStatus()
+      sendResponseTo(if active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
 
   @listenFromMessenger: (event) =>
     if active and event.data == 'plugmixer_user_playing'
       playlist = @getRandomPlaylist()
       if playlist? then playlist.activate()
+    else if event.data.about? and event.data.about == 'plugmixer_user_info'
+      userId = event.data.userId
+      @load() # Ready to load from storage.
 
   @showIcon: =>
     if active # Active
-      chrome.runtime.sendMessage('plugmixer_active_icon')
+      chrome.runtime.sendMessage('plugmixer_make_active')
     else # Inactive
-      chrome.runtime.sendMessage('plugmixer_inactive_icon')
+      chrome.runtime.sendMessage('plugmixer_make_inactive')
 
   @toggleStatus: =>
     active = !active
-    chrome.storage.sync.set 'status': active
+    @save 'status', active
     @showIcon()
 
   @getRandomPlaylist: =>
@@ -76,17 +72,23 @@ class Plugmixer
     null
 
   @load: =>
-    chrome.storage.sync.get ['playlists', 'status'], (data) =>
-      if data.status?
-        active = data.status
-        @showIcon()
-      if data.playlists?
-        console.log data.playlists
-        savedPlaylists = JSON.parse(data.playlists)
+    chrome.storage.sync.get userId, (data) =>
+      userData = data[userId] if data[userId]?
+      if userData.status?
+        active = userData.status
+      @showIcon()
+      if userData.playlists?
+        savedPlaylists = JSON.parse(userData.playlists)
         for playlist in playlists
           for savedPlaylist in savedPlaylists
             if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
-              playlist.disable()  
+              playlist.disable()
+
+  @save: (key, value) =>
+    userData[key] = value
+    data = {}
+    data[userId] = userData
+    chrome.storage.sync.set data
 
   @savePlaylists: =>
     playlistsCondensed = $.makeArray(playlists).map (playlist) ->
@@ -95,7 +97,7 @@ class Plugmixer
         enabled: playlist.enabled
       }
     playlistsCondensed = JSON.stringify(playlistsCondensed)
-    chrome.storage.sync.set 'playlists': playlistsCondensed
+    @save 'playlists', playlistsCondensed
 
   class Playlist
     FADE_DURATION = 0.3

@@ -10,5 +10,5 @@ window.postMessage
   , '*'
 
 window.addEventListener 'message', (event) ->
-  if event.data.about == 'plugmixer_send_chat'
+  if event.data.about? and event.data.about == 'plugmixer_send_chat'
     API.chatLog event.data.message

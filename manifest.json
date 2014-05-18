@@ -32,7 +32,7 @@
       "19": "images/icon19.png",
       "38": "images/icon38.png"
     },
-    "default_title": "Plugmixer"
-  },
-  "options_page": "options.html"
+    "default_title": "Plugmixer",
+    "default_popup": "popup.html"
+  }
 }

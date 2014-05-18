@@ -21,7 +21,7 @@ waitForPlaylists = function() {
 waitForPlaylists();
 
 Plugmixer = (function() {
-  var Playlist, active, playlists, userId;
+  var Playlist, active, playlists, userData, userId;
 
   function Plugmixer() {}
 
@@ -31,33 +31,25 @@ Plugmixer = (function() {
 
   userId = null;
 
+  userData = {};
+
   Plugmixer.initialize = function() {
     var inject, playlistsDom;
     playlistsDom = $('#playlist-menu div.row');
     playlists = playlistsDom.map(function(i, pDom) {
       return new Playlist($(pDom));
     });
+    window.addEventListener('message', Plugmixer.listenFromMessenger);
+    chrome.runtime.onMessage.addListener(Plugmixer.listenFromBackground);
     inject = document.createElement('script');
     inject.src = chrome.extension.getURL('apimessenger.js');
-    (document.head || document.documentElement).appendChild(inject);
-    window.addEventListener('message', function() {
-      var handler;
-      handler = function(event) {
-        if ((event.data.about != null) && event.data.about === 'plugmixer_user_info') {
-          userId = event.data.userId;
-          return window.removeEventListener('message', handler);
-        }
-      };
-      return handler;
-    });
-    Plugmixer.load();
-    window.addEventListener('message', Plugmixer.listenFromMessenger);
-    return chrome.runtime.onMessage.addListener(Plugmixer.listenFromBackground);
+    return (document.head || document.documentElement).appendChild(inject);
   };
 
   Plugmixer.listenFromBackground = function(message, sender, sendResponseTo) {
-    if (message === 'plugmixer_icon_clicked') {
-      return Plugmixer.toggleStatus();
+    if (message === 'plugmixer_toggle_status') {
+      Plugmixer.toggleStatus();
+      return sendResponseTo(active ? 'plugmixer_make_active' : 'plugmixer_make_inactive');
     }
   };
 
@@ -68,22 +60,23 @@ Plugmixer = (function() {
       if (playlist != null) {
         return playlist.activate();
       }
+    } else if ((event.data.about != null) && event.data.about === 'plugmixer_user_info') {
+      userId = event.data.userId;
+      return Plugmixer.load();
     }
   };
 
   Plugmixer.showIcon = function() {
     if (active) {
-      return chrome.runtime.sendMessage('plugmixer_active_icon');
+      return chrome.runtime.sendMessage('plugmixer_make_active');
     } else {
-      return chrome.runtime.sendMessage('plugmixer_inactive_icon');
+      return chrome.runtime.sendMessage('plugmixer_make_inactive');
     }
   };
 
   Plugmixer.toggleStatus = function() {
     active = !active;
-    chrome.storage.sync.set({
-      'status': active
-    });
+    Plugmixer.save('status', active);
     return Plugmixer.showIcon();
   };
 
@@ -109,15 +102,17 @@ Plugmixer = (function() {
   };
 
   Plugmixer.load = function() {
-    return chrome.storage.sync.get(['playlists', 'status'], function(data) {
+    return chrome.storage.sync.get(userId, function(data) {
       var playlist, savedPlaylist, savedPlaylists, _i, _len, _results;
-      if (data.status != null) {
-        active = data.status;
-        Plugmixer.showIcon();
+      if (data[userId] != null) {
+        userData = data[userId];
       }
-      if (data.playlists != null) {
-        console.log(data.playlists);
-        savedPlaylists = JSON.parse(data.playlists);
+      if (userData.status != null) {
+        active = userData.status;
+      }
+      Plugmixer.showIcon();
+      if (userData.playlists != null) {
+        savedPlaylists = JSON.parse(userData.playlists);
         _results = [];
         for (_i = 0, _len = playlists.length; _i < _len; _i++) {
           playlist = playlists[_i];
@@ -140,6 +135,14 @@ Plugmixer = (function() {
     });
   };
 
+  Plugmixer.save = function(key, value) {
+    var data;
+    userData[key] = value;
+    data = {};
+    data[userId] = userData;
+    return chrome.storage.sync.set(data);
+  };
+
   Plugmixer.savePlaylists = function() {
     var playlistsCondensed;
     playlistsCondensed = $.makeArray(playlists).map(function(playlist) {
@@ -149,9 +152,7 @@ Plugmixer = (function() {
       };
     });
     playlistsCondensed = JSON.stringify(playlistsCondensed);
-    return chrome.storage.sync.set({
-      'playlists': playlistsCondensed
-    });
+    return Plugmixer.save('playlists', playlistsCondensed);
   };
 
   Playlist = (function() {
