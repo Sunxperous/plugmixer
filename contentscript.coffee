@@ -2,6 +2,8 @@
 
 INITIALIZATION_TIMER = 256
 INITIALIZATION_TTL   = 192
+FADE_DURATION        = 0.3
+FADE_OPACITY         = 0.4
 
 ttl = 0
 waitForPlaylists = ->
@@ -100,8 +102,6 @@ class Plugmixer
     @save 'playlists', playlistsCondensed
 
   class Playlist
-    FADE_DURATION = 0.3
-    FADE_OPACITY = 0.4
 
     constructor: (@dom) ->
       @name = @dom.children('span.name').text()
