@@ -18,12 +18,9 @@ chrome.tabs.query({
   }, function(result) {
     if (result === 'Plugmixer') {
       $('.toggle').css('left', SHIFT_LEFT);
-      $('.inactive').css('opacity', OPACITY);
-      return $('.active').css('opacity', '1');
+      return $('.inactive').css('opacity', OPACITY);
     } else {
-      $('.toggle').css('left', '0');
-      $('.active').css('opacity', OPACITY);
-      return $('.inactive').css('opacity', '1');
+      return $('.active').css('opacity', OPACITY);
     }
   });
 });

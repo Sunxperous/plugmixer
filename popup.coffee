@@ -11,11 +11,8 @@ chrome.tabs.query {active: true, currentWindow: true}, (tabs) ->
     if result == 'Plugmixer'
       $('.toggle').css('left', SHIFT_LEFT)
       $('.inactive').css('opacity', OPACITY)
-      $('.active').css('opacity', '1')
     else
-      $('.toggle').css('left', '0')
       $('.active').css('opacity', OPACITY)
-      $('.inactive').css('opacity', '1')
 
 $('#status').click (event) ->
   chrome.tabs.sendMessage tabId, 'plugmixer_toggle_status', (response) ->
