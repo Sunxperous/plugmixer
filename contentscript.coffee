@@ -74,17 +74,33 @@ class Plugmixer
     null
 
   @load: =>
-    chrome.storage.sync.get userId, (data) =>
-      userData = data[userId] if data[userId]?
-      if userData.status?
-        active = userData.status
-      @showIcon()
-      if userData.playlists?
-        savedPlaylists = JSON.parse(userData.playlists)
+    chrome.storage.sync.get ['playlists', 'status', userId], (data) => # Old version compatibility.
+      if data.playlists? and data.status? and !data[userId]? # Old data without new data...
+        # Old playlists:
+        @save 'playlists', data.playlists
+        savedPlaylists = JSON.parse(data.playlists)
         for playlist in playlists
           for savedPlaylist in savedPlaylists
             if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
               playlist.disable()
+
+        # Old status:
+        @save 'status', data.status
+        active = data.status
+
+        chrome.storage.sync.remove ['playlists', 'status']
+
+      else
+        userData = data[userId] if data[userId]?
+        if userData.status?
+          active = userData.status
+        @showIcon()
+        if userData.playlists?
+          savedPlaylists = JSON.parse(userData.playlists)
+          for playlist in playlists
+            for savedPlaylist in savedPlaylists
+              if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
+                playlist.disable()
 
   @save: (key, value) =>
     userData[key] = value

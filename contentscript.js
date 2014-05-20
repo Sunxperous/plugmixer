@@ -106,35 +106,52 @@ Plugmixer = (function() {
   };
 
   Plugmixer.load = function() {
-    return chrome.storage.sync.get(userId, function(data) {
-      var playlist, savedPlaylist, savedPlaylists, _i, _len, _results;
-      if (data[userId] != null) {
-        userData = data[userId];
-      }
-      if (userData.status != null) {
-        active = userData.status;
-      }
-      Plugmixer.showIcon();
-      if (userData.playlists != null) {
-        savedPlaylists = JSON.parse(userData.playlists);
-        _results = [];
+    return chrome.storage.sync.get(['playlists', 'status', userId], function(data) {
+      var playlist, savedPlaylist, savedPlaylists, _i, _j, _k, _len, _len1, _len2, _results;
+      if ((data.playlists != null) && (data.status != null) && (data[userId] == null)) {
+        Plugmixer.save('playlists', data.playlists);
+        savedPlaylists = JSON.parse(data.playlists);
         for (_i = 0, _len = playlists.length; _i < _len; _i++) {
           playlist = playlists[_i];
-          _results.push((function() {
-            var _j, _len1, _results1;
-            _results1 = [];
-            for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
-              savedPlaylist = savedPlaylists[_j];
-              if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
-                _results1.push(playlist.disable());
-              } else {
-                _results1.push(void 0);
-              }
+          for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
+            savedPlaylist = savedPlaylists[_j];
+            if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
+              playlist.disable();
             }
-            return _results1;
-          })());
+          }
         }
-        return _results;
+        Plugmixer.save('status', data.status);
+        active = data.status;
+        return chrome.storage.sync.remove(['playlists', 'status']);
+      } else {
+        if (data[userId] != null) {
+          userData = data[userId];
+        }
+        if (userData.status != null) {
+          active = userData.status;
+        }
+        Plugmixer.showIcon();
+        if (userData.playlists != null) {
+          savedPlaylists = JSON.parse(userData.playlists);
+          _results = [];
+          for (_k = 0, _len2 = playlists.length; _k < _len2; _k++) {
+            playlist = playlists[_k];
+            _results.push((function() {
+              var _l, _len3, _results1;
+              _results1 = [];
+              for (_l = 0, _len3 = savedPlaylists.length; _l < _len3; _l++) {
+                savedPlaylist = savedPlaylists[_l];
+                if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
+                  _results1.push(playlist.disable());
+                } else {
+                  _results1.push(void 0);
+                }
+              }
+              return _results1;
+            })());
+          }
+          return _results;
+        }
       }
     });
   };
