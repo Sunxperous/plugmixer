@@ -80,7 +80,7 @@ Plugmixer = (function() {
 
   Plugmixer.toggleStatus = function() {
     active = !active;
-    Plugmixer.save('status', active);
+    Plugmixer.save('status', active ? 1 : 0);
     return Plugmixer.showIcon();
   };
 
@@ -107,9 +107,8 @@ Plugmixer = (function() {
 
   Plugmixer.load = function() {
     return chrome.storage.sync.get(['playlists', 'status', userId], function(data) {
-      var playlist, savedPlaylist, savedPlaylists, _i, _j, _k, _len, _len1, _len2, _results;
+      var playlist, savedPlaylist, savedPlaylists, _i, _j, _k, _l, _len, _len1, _len2, _len3;
       if ((data.playlists != null) && (data.status != null) && (data[userId] == null)) {
-        Plugmixer.save('playlists', data.playlists);
         savedPlaylists = JSON.parse(data.playlists);
         for (_i = 0, _len = playlists.length; _i < _len; _i++) {
           playlist = playlists[_i];
@@ -120,9 +119,10 @@ Plugmixer = (function() {
             }
           }
         }
-        Plugmixer.save('status', data.status);
+        Plugmixer.savePlaylists();
         active = data.status;
-        return chrome.storage.sync.remove(['playlists', 'status']);
+        Plugmixer.save('status', active ? 1 : 0);
+        chrome.storage.sync.remove(['playlists', 'status']);
       } else {
         if (data[userId] != null) {
           userData = data[userId];
@@ -130,29 +130,20 @@ Plugmixer = (function() {
         if (userData.status != null) {
           active = userData.status;
         }
-        Plugmixer.showIcon();
         if (userData.playlists != null) {
           savedPlaylists = JSON.parse(userData.playlists);
-          _results = [];
           for (_k = 0, _len2 = playlists.length; _k < _len2; _k++) {
             playlist = playlists[_k];
-            _results.push((function() {
-              var _l, _len3, _results1;
-              _results1 = [];
-              for (_l = 0, _len3 = savedPlaylists.length; _l < _len3; _l++) {
-                savedPlaylist = savedPlaylists[_l];
-                if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
-                  _results1.push(playlist.disable());
-                } else {
-                  _results1.push(void 0);
-                }
+            for (_l = 0, _len3 = savedPlaylists.length; _l < _len3; _l++) {
+              savedPlaylist = savedPlaylists[_l];
+              if (playlist.name === savedPlaylist.n && !savedPlaylist.e) {
+                playlist.disable();
               }
-              return _results1;
-            })());
+            }
           }
-          return _results;
         }
       }
+      return Plugmixer.showIcon();
     });
   };
 
@@ -168,8 +159,8 @@ Plugmixer = (function() {
     var playlistsCondensed;
     playlistsCondensed = $.makeArray(playlists).map(function(playlist) {
       return {
-        name: playlist.name,
-        enabled: playlist.enabled
+        n: playlist.name,
+        e: playlist.enabled
       };
     });
     playlistsCondensed = JSON.stringify(playlistsCondensed);

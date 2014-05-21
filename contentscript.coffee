@@ -58,7 +58,7 @@ class Plugmixer
 
   @toggleStatus: =>
     active = !active
-    @save 'status', active
+    @save 'status', if active then 1 else 0
     @showIcon()
 
   @getRandomPlaylist: =>
@@ -77,30 +77,31 @@ class Plugmixer
     chrome.storage.sync.get ['playlists', 'status', userId], (data) => # Old version compatibility.
       if data.playlists? and data.status? and !data[userId]? # Old data without new data...
         # Old playlists:
-        @save 'playlists', data.playlists
         savedPlaylists = JSON.parse(data.playlists)
         for playlist in playlists
           for savedPlaylist in savedPlaylists
             if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
               playlist.disable()
+        @savePlaylists()
 
         # Old status:
-        @save 'status', data.status
         active = data.status
+        @save 'status', if active then 1 else 0
 
         chrome.storage.sync.remove ['playlists', 'status']
 
       else
         userData = data[userId] if data[userId]?
         if userData.status?
-          active = userData.status
-        @showIcon()
+          active = !!userData.status # Converts 0/1 to false/true.
         if userData.playlists?
           savedPlaylists = JSON.parse(userData.playlists)
           for playlist in playlists
             for savedPlaylist in savedPlaylists
-              if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
+              if playlist.name == savedPlaylist.n && !savedPlaylist.e # n=name; e=enabled.
                 playlist.disable()
+
+      @showIcon()
 
   @save: (key, value) =>
     userData[key] = value
@@ -110,9 +111,9 @@ class Plugmixer
 
   @savePlaylists: =>
     playlistsCondensed = $.makeArray(playlists).map (playlist) ->
-      return {
-        name: playlist.name,
-        enabled: playlist.enabled
+      return { # n=name; e=enabled.
+        n: playlist.name,
+        e: playlist.enabled
       }
     playlistsCondensed = JSON.stringify(playlistsCondensed)
     @save 'playlists', playlistsCondensed
