@@ -5,12 +5,29 @@
 </head>
 <body>
   <div id="options">
-    <button id="status">
-      <div class="inactive toggle">inactive</div>
-      <div class="active toggle">active</div>
-    </button>
+    <div class="block">
+      <button id="status">
+        <div class="inactive toggle">inactive</div>
+        <div class="active toggle">active</div>
+      </button>
+    </div>
+    <div id="selections" class="block">
+      <div class="bar">
+        <div class="title">PLAYLIST GROUPS</div>
+        <div id="save">+</div>
+      </div>
+      <ul id="list">
+        <li class="selection input">
+          <input type="text" id="new">
+        </li>
+        <li class="selection template" style="display: none;">
+          <span class="name">template</span>
+          <div class="delete">&times;</div>
+        </li>
+      </ul>
+    </div>
   </div>
-  <div id="title">
+  <div id="brand">
     <img src="images/icon19.png" id="logo"/>
     <span>plugmixer</span>
   </div>

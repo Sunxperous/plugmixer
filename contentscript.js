@@ -25,7 +25,7 @@ waitForPlaylists = function() {
 waitForPlaylists();
 
 Plugmixer = (function() {
-  var Playlist, active, playlists, userData, userId;
+  var Playlist, active, playlists, selectionInUse, selections, userData, userId;
 
   function Plugmixer() {}
 
@@ -36,6 +36,10 @@ Plugmixer = (function() {
   userId = null;
 
   userData = {};
+
+  selections = [];
+
+  selectionInUse = null;
 
   Plugmixer.initialize = function() {
     var inject, playlistsDom;
@@ -50,10 +54,27 @@ Plugmixer = (function() {
     return (document.head || document.documentElement).appendChild(inject);
   };
 
-  Plugmixer.listenFromBackground = function(message, sender, sendResponseTo) {
+  Plugmixer.listenFromBackground = function(message, sender, sendResponse) {
+    var selectionId;
     if (message === 'plugmixer_toggle_status') {
       Plugmixer.toggleStatus();
-      return sendResponseTo(active ? 'plugmixer_make_active' : 'plugmixer_make_inactive');
+      return sendResponse(active ? 'plugmixer_make_active' : 'plugmixer_make_inactive');
+    } else if (message === 'plugmixer_get_selections') {
+      return sendResponse({
+        'selections': selections,
+        'activePlaylists': Plugmixer.getEnabledPlaylists()
+      });
+    } else if (message.about === 'plugmixer_save_selection') {
+      selectionId = Plugmixer.saveSelection(message.name);
+      return sendResponse({
+        about: 'plugmixer_selection_saved',
+        selectionId: selectionId
+      });
+    } else if (message.about === 'plugmixer_delete_selection') {
+      Plugmixer.deleteSelection(message.selectionId);
+      return sendResponse('plugmixer_selection_deleted');
+    } else if (message.about === 'plugmixer_choose_selection') {
+      return Plugmixer.chooseSelection(message.selectionId);
     }
   };
 
@@ -82,6 +103,49 @@ Plugmixer = (function() {
     active = !active;
     Plugmixer.save('status', active ? 1 : 0);
     return Plugmixer.showIcon();
+  };
+
+  Plugmixer.getEnabledPlaylists = function() {
+    return $.makeArray(playlists.filter(Playlist.isEnabled)).map(function(playlist) {
+      return playlist.name;
+    });
+  };
+
+  Plugmixer.chooseSelection = function(selectionId) {
+    return chrome.storage.sync.get(selectionId, function(data) {
+      var enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
+      for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+        playlist = playlists[_i];
+        playlist.disable();
+        _ref = data[selectionId];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          enabledPlaylist = _ref[_j];
+          if (playlist.name === enabledPlaylist) {
+            playlist.enable();
+          }
+        }
+      }
+      return Plugmixer.savePlaylists();
+    });
+  };
+
+  Plugmixer.saveSelection = function(name) {
+    var enabledPlaylists, selection, selectionId;
+    selectionId = Date.now().toString();
+    selection = {};
+    enabledPlaylists = Plugmixer.getEnabledPlaylists();
+    enabledPlaylists.unshift(name);
+    selection[selectionId] = enabledPlaylists;
+    chrome.storage.sync.set(selection);
+    selections.unshift(selectionId);
+    Plugmixer.save('selections', selections);
+    return selectionId;
+  };
+
+  Plugmixer.deleteSelection = function(selectionId) {
+    selections.splice(selections.indexOf(selectionId), 1);
+    chrome.storage.sync.remove(selectionId);
+    return Plugmixer.save('selections', selections);
   };
 
   Plugmixer.getRandomPlaylist = function() {
@@ -128,7 +192,7 @@ Plugmixer = (function() {
           userData = data[userId];
         }
         if (userData.status != null) {
-          active = userData.status;
+          active = !!userData.status;
         }
         if (userData.playlists != null) {
           savedPlaylists = JSON.parse(userData.playlists);
@@ -141,6 +205,9 @@ Plugmixer = (function() {
               }
             }
           }
+        }
+        if (userData.selections != null) {
+          selections = userData.selections;
         }
       }
       return Plugmixer.showIcon();

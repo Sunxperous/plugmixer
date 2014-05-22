@@ -2,11 +2,135 @@ body {
   font-family: 'Helvetica', 'Calibri', sans-serif;
   color: #eee;
   background-color: #0a0a0a;
-  width: 200px;
+  width: 256px;
   text-align: center;
   margin: 0;
+  font-size: 12px;
 }
-#title {
+.block {
+  margin-top: 21px;
+  margin-bottom: 21px;
+  position: relative;
+}
+#options {
+  margin: 21px;
+}
+button {
+  background-color: #444a59;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  border: 0 solid #444a59;
+}
+#status {
+  width: 140px;
+  height: 28px;
+  margin: auto auto;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.toggle {
+  display: inline-block;
+  height: 26px;
+  line-height: 26px;
+  position: relative;
+  width: 100px;
+  letter-spacing: 0.2em;
+  color: #eee;
+  font-weight: 800;
+}
+#status .active {
+  background-color: #90ad2f;
+}
+#status .inactive {
+  background-color: #c42e3b;
+}
+.bar {
+  background-color: #805bbd;
+  color: #eee;
+  margin: 0;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  width: inherit;
+}
+.title {
+  padding: 7px;
+  display: inline-block;
+  position: absolute;
+  left: 0px;
+}
+#save {
+  text-align: center;
+  height: 30px;
+  line-height: 30px;
+  width: 30px;
+  position: absolute;
+  right: 0px;
+  border: 0;
+  font-size: 18px;
+  cursor: pointer;
+}
+ul {
+  list-style: none;
+  text-align: left;
+  background-color: #444a59;
+  padding: 4px 0;
+  margin: 0;
+  height: 144px;
+  overflow-y: scroll;
+}
+li.selection {
+  padding: 6px 8px 2px 8px;
+  box-sizing: border-box;
+  position: relative;
+  cursor: pointer;
+}
+li:hover {
+  background-color: #545a69;  
+}
+li.inUse {
+  background-color: #90ad2f;
+}
+li.input {
+  display: none;
+  background-color: #90ad2f;
+  padding: 2px;
+  cursor: auto;
+}
+input[type="text"] {
+  position: relative;
+  right: 0;
+  background-color: inherit;
+  color: inherit;
+  border: 0;
+  margin: 0;
+  padding: 4px 6px;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.name {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 144px;
+}
+.delete {
+  display: inline-block;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  width: 30px;
+  height: 100%;
+  font-size: 20px;
+  cursor: pointer;
+  height: 100%;
+  top: 0;
+}
+#brand {
   display: block;
   background-color: #fff;
   margin-top: 4px;
@@ -20,35 +144,4 @@ body {
 }
 #logo {
   margin-bottom: -5px;
-}
-#options {
-  margin: 14px;
-}
-#status {
-  width: 140px;
-  height: 28px;
-  margin: auto auto;
-  background-color: #444a59;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  border: 0px solid #444a59;
-  padding: 0;
-  cursor: pointer;
-}
-.toggle {
-  display: inline-block;
-  height: 26px;
-  line-height: 26px;
-  position: relative;
-  width: 100px;
-  letter-spacing: 0.2em;
-  color: #eee;
-  font-weight: 800;
-}
-.active {
-  background-color: #90ad2f;
-}
-.inactive {
-  background-color: #c42e3b;
 }

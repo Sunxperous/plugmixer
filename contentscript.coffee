@@ -21,6 +21,8 @@ class Plugmixer
   active = true
   userId = null
   userData = {}
+  selections = []
+  selectionInUse = null
 
   @initialize: =>
     # Read playlists.
@@ -37,10 +39,24 @@ class Plugmixer
     inject.src = chrome.extension.getURL 'apimessenger.js'
     (document.head || document.documentElement).appendChild inject
 
-  @listenFromBackground: (message, sender, sendResponseTo) =>
+  @listenFromBackground: (message, sender, sendResponse) =>
     if message == 'plugmixer_toggle_status'
       @toggleStatus()
-      sendResponseTo(if active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
+      sendResponse(if active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
+    else if message == 'plugmixer_get_selections'
+      sendResponse 
+        'selections': selections,
+        'activePlaylists': @getEnabledPlaylists()
+    else if message.about == 'plugmixer_save_selection'
+      selectionId = @saveSelection message.name
+      sendResponse 
+        about: 'plugmixer_selection_saved'
+        selectionId: selectionId
+    else if message.about == 'plugmixer_delete_selection'
+      @deleteSelection message.selectionId
+      sendResponse 'plugmixer_selection_deleted'
+    else if message.about == 'plugmixer_choose_selection'
+      @chooseSelection message.selectionId
 
   @listenFromMessenger: (event) =>
     if active and event.data == 'plugmixer_user_playing'
@@ -60,6 +76,38 @@ class Plugmixer
     active = !active
     @save 'status', if active then 1 else 0
     @showIcon()
+
+  @getEnabledPlaylists: =>
+    return $.makeArray(playlists.filter(Playlist.isEnabled)).map (playlist) =>
+      playlist.name
+
+  @chooseSelection: (selectionId) =>
+    chrome.storage.sync.get selectionId, (data) =>
+      for playlist in playlists
+        playlist.disable()
+        for enabledPlaylist in data[selectionId]
+          if playlist.name == enabledPlaylist
+            playlist.enable()
+      @savePlaylists()
+
+  @saveSelection: (name) =>
+    selectionId = Date.now().toString()
+    selection = {}
+    enabledPlaylists = @getEnabledPlaylists()
+    enabledPlaylists.unshift name
+    selection[selectionId] = enabledPlaylists
+    chrome.storage.sync.set selection
+
+    # Save selection under user.
+    selections.unshift selectionId
+    @save 'selections', selections
+
+    return selectionId
+
+  @deleteSelection: (selectionId) =>
+    selections.splice(selections.indexOf(selectionId), 1)
+    chrome.storage.sync.remove selectionId
+    @save 'selections', selections
 
   @getRandomPlaylist: =>
     countSum = 0
@@ -100,6 +148,8 @@ class Plugmixer
             for savedPlaylist in savedPlaylists
               if playlist.name == savedPlaylist.n && !savedPlaylist.e # n=name; e=enabled.
                 playlist.disable()
+        if userData.selections?
+          selections = userData.selections
 
       @showIcon()
 
