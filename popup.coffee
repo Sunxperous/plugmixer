@@ -96,6 +96,7 @@ $('#new').keyup (event) ->
         name: name
         , (response) ->
           if response.about == 'plugmixer_selection_saved'
+            $('#save').html '+'
             inputting = 2
             $('.input').animate {'height': 'toggle'}
               , 256, (animation, jumpedToEnd) ->

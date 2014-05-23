@@ -146,6 +146,7 @@ $('#new').keyup(function(event) {
         name: name
       }, function(response) {
         if (response.about === 'plugmixer_selection_saved') {
+          $('#save').html('+');
           inputting = 2;
           return $('.input').animate({
             'height': 'toggle'
