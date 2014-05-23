@@ -113,16 +113,21 @@ Plugmixer = (function() {
 
   Plugmixer.chooseSelection = function(selectionId) {
     return chrome.storage.sync.get(selectionId, function(data) {
-      var enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
+      var enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
       for (_i = 0, _len = playlists.length; _i < _len; _i++) {
         playlist = playlists[_i];
-        playlist.disable();
+        enable = false;
         _ref = data[selectionId];
         for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
           enabledPlaylist = _ref[_j];
           if (playlist.name === enabledPlaylist) {
-            playlist.enable();
+            enable = true;
           }
+        }
+        if (enable) {
+          playlist.enable();
+        } else {
+          playlist.disable();
         }
       }
       return Plugmixer.savePlaylists();

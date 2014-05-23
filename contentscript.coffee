@@ -84,10 +84,11 @@ class Plugmixer
   @chooseSelection: (selectionId) =>
     chrome.storage.sync.get selectionId, (data) =>
       for playlist in playlists
-        playlist.disable()
+        enable = false
         for enabledPlaylist in data[selectionId]
           if playlist.name == enabledPlaylist
-            playlist.enable()
+            enable = true
+        if enable then playlist.enable() else playlist.disable()
       @savePlaylists()
 
   @saveSelection: (name) =>
