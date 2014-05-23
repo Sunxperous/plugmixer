@@ -1,4 +1,4 @@
-# ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/icon48.png) Plugmixer
+# ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/images/icon48.png) Plugmixer
 
 #### Overcome the 200 item count limit in plug.dj playlists with this script!
 
