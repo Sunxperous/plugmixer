@@ -41,4 +41,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
   }
 });
 
-chrome.runtime.onInstalled.addListener(function(details) {});
+chrome.runtime.onInstalled.addListener(function(details) {
+  return chrome.storage.sync.remove('indicator');
+});

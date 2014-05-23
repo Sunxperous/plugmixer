@@ -25,3 +25,4 @@ chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
       chrome.pageAction.setTitle 'tabId': sender.tab.id, 'title': 'Plugmixer'
 
 chrome.runtime.onInstalled.addListener (details) ->
+  chrome.storage.sync.remove 'indicator'
