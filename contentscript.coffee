@@ -115,7 +115,7 @@ class Plugmixer
     for playlist in playlists.filter Playlist.isEnabled
       countSum += playlist.count
     playlistCount = playlists.length
-    weightedSelect = Math.floor(Math.random() * countSum) + 1
+    weightedSelect = Math.floor(Math.random() * countSum)
     for playlist in playlists.filter Playlist.isEnabled
       if weightedSelect < playlist.count
         return playlist

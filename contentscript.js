@@ -162,7 +162,7 @@ Plugmixer = (function() {
       countSum += playlist.count;
     }
     playlistCount = playlists.length;
-    weightedSelect = Math.floor(Math.random() * countSum) + 1;
+    weightedSelect = Math.floor(Math.random() * countSum);
     _ref1 = playlists.filter(Playlist.isEnabled);
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       playlist = _ref1[_j];
