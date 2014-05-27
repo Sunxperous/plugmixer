@@ -1,6 +1,9 @@
 'use strict'
 
+$('#now-playing-media .bar-value').attr 'title', $('#now-playing-media .bar-value').text()
+
 API.on API.DJ_ADVANCE, (obj) ->
+  $('#now-playing-media .bar-value').attr 'title', $('#now-playing-media .bar-value').text()
   if obj.dj? and obj.dj.username == API.getUser().username
     window.postMessage 'plugmixer_user_playing', '*'
 
