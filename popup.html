@@ -4,7 +4,7 @@
   <link rel="stylesheet" type="text/css" href="popup.css">
 </head>
 <body>
-  <div id="options">
+  <div id="main">
     <div class="block">
       <button id="status">
         <div class="inactive toggle">inactive</div>
@@ -14,15 +14,23 @@
     <div id="selections" class="block">
       <div class="bar">
         <div class="title">PLAYLIST GROUPS</div>
-        <div id="save">+</div>
+        <div id="save" title="Add new group">+</div>
+        <div class="subtitle">
+          <span id="number_selected"></span>
+          SELECTED PLAYLISTS
+        </div>
       </div>
       <ul id="list">
         <li class="selection input">
-          <input type="text" id="new">
+          <input type="text" id="new" placeholder="Enter name here">
+          <ul class="playlists">
+          </ul>
         </li>
         <li class="selection template" style="display: none;">
           <span class="name">template</span>
           <div class="delete">&times;</div>
+          <ul class="playlists" style="display: none;">
+          </ul>
         </li>
       </ul>
     </div>

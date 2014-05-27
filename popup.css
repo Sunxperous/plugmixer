@@ -7,13 +7,13 @@ body {
   margin: 0;
   font-size: 12px;
 }
+#main {
+  margin: 21px;
+}
 .block {
   margin-top: 21px;
   margin-bottom: 21px;
   position: relative;
-}
-#options {
-  margin: 21px;
 }
 button {
   background-color: #444a59;
@@ -35,7 +35,7 @@ button {
   line-height: 26px;
   position: relative;
   width: 100px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.24em;
   color: #eee;
   font-weight: 800;
 }
@@ -52,79 +52,110 @@ button {
   text-align: left;
   font-size: 12px;
   font-weight: 800;
-  height: 30px;
-  width: inherit;
+}
+#selections .bar {
+  height: 40px;
+  overflow: hidden;
 }
 .title {
-  padding: 7px;
-  display: inline-block;
-  position: absolute;
-  left: 0px;
+  padding: 6px 6px 0 8px;
+  float: left;
 }
 #save {
   text-align: center;
-  height: 30px;
-  line-height: 30px;
-  width: 30px;
-  position: absolute;
-  right: 0px;
+  height: 40px;
+  line-height: 40px;
+  width: 40px;
+  float: right;
   border: 0;
-  font-size: 18px;
+  border-left: 2px #444a59 solid;
+  font-size: 20px;
   cursor: pointer;
+}
+#save:hover {
+  background-color: #603b9d;
+}
+.subtitle {
+  float: left;
+  padding: 0 6px 6px 8px;
+  font-size: 10px;
+  color: #dddddd;
 }
 ul {
   list-style: none;
   text-align: left;
+}
+ul#list {
   background-color: #444a59;
   padding: 4px 0;
   margin: 0;
-  height: 144px;
+  height: 192px;
   overflow-y: scroll;
 }
+ul.playlists {
+  padding-left: 8px;
+  color: #ccc;
+}
+ul.playlists li {
+  display: inline-block;
+  white-space: pre-wrap;
+}
+ul.playlists li:after {
+  content: ', ';
+}
+ul.playlists li:last-child:after {
+  content: '';
+}
+li.input li {
+  color: #ddd;
+}
+li.selection:hover {
+  background-color: #545a69;  
+}
 li.selection {
-  padding: 6px 8px 2px 8px;
+  padding: 6px 8px;
   box-sizing: border-box;
   position: relative;
   cursor: pointer;
 }
-li:hover {
-  background-color: #545a69;  
-}
-li.inUse {
-  background-color: #90ad2f;
-}
-li.input {
+li.input, li.input:hover {
   display: none;
-  background-color: #90ad2f;
-  padding: 2px;
+  background-color: #617e00;
+  padding: 6px 8px;
   cursor: auto;
 }
-input[type="text"] {
+li.inUse, li.inUse:hover {
+  background-color: #90ad2f;
+}
+#new {
   position: relative;
   right: 0;
   background-color: inherit;
   color: inherit;
   border: 0;
   margin: 0;
-  padding: 4px 6px;
+  padding: 0;
   font-size: 12px;
   outline: none;
   width: 100%;
   box-sizing: border-box;
+  font-weight: 800;
 }
 .name {
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 144px;
+  font-weight: 800;
 }
 .delete {
   display: inline-block;
   position: absolute;
   right: 0;
   text-align: center;
-  width: 30px;
-  height: 100%;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
   font-size: 20px;
   cursor: pointer;
   height: 100%;
