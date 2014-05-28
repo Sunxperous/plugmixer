@@ -181,6 +181,9 @@ class Plugmixer
     chrome.storage.sync.get userId, (data) => 
       userData = data[userId] if data[userId]?
 
+      if userData.selections?
+        selections = userData.selections
+        
       # Old version compatibility.
       if userData.status? or userData.playlists?
         if userData.status?
@@ -200,8 +203,6 @@ class Plugmixer
         @showIcon()
 
       else
-        if userData.selections?
-          selections = userData.selections
         if userData.lastPlayedIn?
           lastPlayedIn = userData.lastPlayedIn
         if userData.favorites?

@@ -266,6 +266,9 @@ Plugmixer = (function() {
       if (data[userId] != null) {
         userData = data[userId];
       }
+      if (userData.selections != null) {
+        selections = userData.selections;
+      }
       if ((userData.status != null) || (userData.playlists != null)) {
         if (userData.status != null) {
           active = userData.status;
@@ -293,9 +296,6 @@ Plugmixer = (function() {
         Plugmixer.savePlaylists();
         return Plugmixer.showIcon();
       } else {
-        if (userData.selections != null) {
-          selections = userData.selections;
-        }
         if (userData.lastPlayedIn != null) {
           lastPlayedIn = userData.lastPlayedIn;
         }
