@@ -141,17 +141,22 @@ class Plugmixer
 
   @updateFavorites: (callback) =>
     if @isCurrentRoomFavorite()
+
       if favorites.indexOf(@getRoomId()) == -1 # Not listed as favorite.
         favorites.push @getRoomId()
         @save 'favorites', favorites
-        callback lastPlayedIn, true
-      else callback @getRoomId(), false
+        callback lastPlayedIn, true # Loads lastPlayedIn then save, or saves roomId.
+
+      else callback @getRoomId(), false # Loads or saves roomId.
+
     else # Not a favorite...
+
       if favorites.indexOf(@getRoomId()) > -1 # But listed as favorite.
         favorites.splice favorites.indexOf(@getRoomId()), 1
         @save 'favorites', favorites
         chrome.storage.sync.remove userId + '_' + @getRoomId()
-      callback lastPlayedIn, false
+
+      callback lastPlayedIn, false # Loads lastPlayedIn or saves default.
 
   @savePlaylists: =>
     if @isCurrentRoomFavorite()
@@ -174,8 +179,9 @@ class Plugmixer
         if enable then playlist.enable() else playlist.disable()
 
       @savePlaylists() if toSave
-      @showIcon()
+      @showIcon() # Activity determined after load.
 
+      # If currently activated playlist is not part of selection...
       activated = playlists.filter(Playlist.isActivated)[0]
       if !activated.enabled
         playlist = @getRandomPlaylist()
@@ -207,6 +213,7 @@ class Plugmixer
         @savePlaylists()
         @showIcon()
 
+      # New storage version.
       else
         if userData.lastPlayedIn?
           lastPlayedIn = userData.lastPlayedIn
