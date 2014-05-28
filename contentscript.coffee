@@ -18,11 +18,13 @@ waitForPlaylists()
 
 class Plugmixer
   playlists = null
-  active = true
+  active = 1
   userId = null
   userData = {}
+  favorites = []
   selections = []
   selectionInUse = null
+  lastPlayedIn = 'default'
 
   @initialize: =>
     # Read playlists.
@@ -42,7 +44,7 @@ class Plugmixer
   @listenFromBackground: (message, sender, sendResponse) =>
     if message == 'plugmixer_toggle_status'
       @toggleStatus()
-      sendResponse(if active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
+      sendResponse(if !!active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
     else if message == 'plugmixer_get_selections'
       sendResponse 
         'selections': selections,
@@ -59,7 +61,7 @@ class Plugmixer
       @chooseSelection message.selectionId
 
   @listenFromMessenger: (event) =>
-    if active and event.data == 'plugmixer_user_playing'
+    if !!active and event.data == 'plugmixer_user_playing'
       playlist = @getRandomPlaylist()
       if playlist? then playlist.activate()
     else if event.data.about? and event.data.about == 'plugmixer_user_info'
@@ -67,19 +69,25 @@ class Plugmixer
       @load() # Ready to load from storage.
 
   @showIcon: =>
-    if active # Active
+    if !!active # Active
       chrome.runtime.sendMessage('plugmixer_make_active')
     else # Inactive
       chrome.runtime.sendMessage('plugmixer_make_inactive')
 
   @toggleStatus: =>
-    active = !active
-    @save 'status', if active then 1 else 0
+    active = if !!active then 0 else 1
+    #@save 'status', active
+    @savePlaylists()
     @showIcon()
 
   @getEnabledPlaylists: =>
     return $.makeArray(playlists.filter(Playlist.isEnabled)).map (playlist) =>
       playlist.name
+
+  @getEnabledPlaylistsUnshift: (value) =>
+    enabledPlaylists = @getEnabledPlaylists()
+    enabledPlaylists.unshift value
+    return enabledPlaylists
 
   @chooseSelection: (selectionId) =>
     chrome.storage.sync.get selectionId, (data) =>
@@ -94,9 +102,7 @@ class Plugmixer
   @saveSelection: (name) =>
     selectionId = Date.now().toString()
     selection = {}
-    enabledPlaylists = @getEnabledPlaylists()
-    enabledPlaylists.unshift name
-    selection[selectionId] = enabledPlaylists
+    selection[selectionId] = @getEnabledPlaylistsUnshift name
     chrome.storage.sync.set selection
 
     # Save selection under user.
@@ -122,37 +128,87 @@ class Plugmixer
       weightedSelect -= playlist.count
     null
 
+  @getRoomId: =>
+    id = window.location.pathname
+    return id.substring 1, id.length - 1
+
+  @isCurrentRoomFavorite: =>
+    $('#room-bar .favorite').hasClass 'selected'
+
+  @saveRoomPlaylist: (name) =>
+    roomPlaylists = {}
+    roomPlaylists[userId + '_' + name] = @getEnabledPlaylistsUnshift active
+    chrome.storage.sync.set roomPlaylists
+
+  @updateFavorites: (callback) =>
+    if @isCurrentRoomFavorite()
+      if favorites.indexOf(@getRoomId()) == -1 # Not listed as favorite.
+        favorites.push @getRoomId()
+        @save 'favorites', favorites
+        callback lastPlayedIn, true
+      else callback @getRoomId(), false
+    else # Not a favorite...
+      if favorites.indexOf(@getRoomId()) > -1 # But listed as favorite.
+        favorites.splice favorites.indexOf(@getRoomId()), 1
+        @save 'favorites', favorites
+        chrome.storage.sync.remove userId + '_' + @getRoomId()
+      callback lastPlayedIn, false
+
+  @savePlaylists: =>
+    if @isCurrentRoomFavorite()
+      lastPlayedIn = @getRoomId()
+    else
+      lastPlayedIn = 'default'
+    @updateFavorites (roomId) =>
+      @saveRoomPlaylist roomId
+      @save 'lastPlayedIn', roomId
+
+  @loadPlaylists: (location, toSave) =>
+    identifier = userId + '_' + location
+    chrome.storage.sync.get identifier, (data) =>
+      active = data[identifier].splice(0, 1)[0]
+      for playlist in playlists
+        enable = false
+        for enabledPlaylist in data[identifier] # Remaining data are enabled playlists.
+          if playlist.name == enabledPlaylist
+            enable = true
+        if enable then playlist.enable() else playlist.disable()
+
+      @savePlaylists() if toSave
+      @showIcon()
+
   @load: =>
-    chrome.storage.sync.get ['playlists', 'status', userId], (data) => # Old version compatibility.
-      if data.playlists? and data.status? and !data[userId]? # Old data without new data...
-        # Old playlists:
-        savedPlaylists = JSON.parse(data.playlists)
-        for playlist in playlists
-          for savedPlaylist in savedPlaylists
-            if playlist.name == savedPlaylist.name && !savedPlaylist.enabled
-              playlist.disable()
-        @savePlaylists()
+    chrome.storage.sync.get userId, (data) => 
+      userData = data[userId] if data[userId]?
 
-        # Old status:
-        active = data.status
-        @save 'status', if active then 1 else 0
-
-        chrome.storage.sync.remove ['playlists', 'status']
-
-      else
-        userData = data[userId] if data[userId]?
+      # Old version compatibility.
+      if userData.status? or userData.playlists?
         if userData.status?
-          active = !!userData.status # Converts 0/1 to false/true.
+          active = userData.status
+          delete userData.status
         if userData.playlists?
           savedPlaylists = JSON.parse(userData.playlists)
           for playlist in playlists
-            for savedPlaylist in savedPlaylists
-              if playlist.name == savedPlaylist.n && !savedPlaylist.e # n=name; e=enabled.
-                playlist.disable()
+            enable = false
+            for enabledPlaylist in savedPlaylists
+              if playlist.name == enabledPlaylist.n and enabledPlaylist.e
+                enable = true
+            if enable then playlist.enable() else playlist.disable()
+          delete userData.playlists
+
+        @savePlaylists()
+        @showIcon()
+
+      else
         if userData.selections?
           selections = userData.selections
+        if userData.lastPlayedIn?
+          lastPlayedIn = userData.lastPlayedIn
+        if userData.favorites?
+          favorites = userData.favorites
+          @updateFavorites (roomId, toSave) =>
+            @loadPlaylists roomId, toSave
 
-      @showIcon()
 
   @save: (key, value) =>
     userData[key] = value
@@ -160,21 +216,11 @@ class Plugmixer
     data[userId] = userData
     chrome.storage.sync.set data
 
-  @savePlaylists: =>
-    playlistsCondensed = $.makeArray(playlists).map (playlist) ->
-      return { # n=name; e=enabled.
-        n: playlist.name,
-        e: playlist.enabled
-      }
-    playlistsCondensed = JSON.stringify(playlistsCondensed)
-    @save 'playlists', playlistsCondensed
-
   class Playlist
-
     constructor: (@dom) ->
       @name = @dom.children('span.name').text()
       @count = parseInt(@dom.children('span.count').text())
-      @enabled = true
+      @enabled = false
 
       @applyTrigger()
 

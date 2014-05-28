@@ -25,21 +25,25 @@ waitForPlaylists = function() {
 waitForPlaylists();
 
 Plugmixer = (function() {
-  var Playlist, active, playlists, selectionInUse, selections, userData, userId;
+  var Playlist, active, favorites, lastPlayedIn, playlists, selectionInUse, selections, userData, userId;
 
   function Plugmixer() {}
 
   playlists = null;
 
-  active = true;
+  active = 1;
 
   userId = null;
 
   userData = {};
 
+  favorites = [];
+
   selections = [];
 
   selectionInUse = null;
+
+  lastPlayedIn = 'default';
 
   Plugmixer.initialize = function() {
     var inject, playlistsDom;
@@ -58,7 +62,7 @@ Plugmixer = (function() {
     var selectionId;
     if (message === 'plugmixer_toggle_status') {
       Plugmixer.toggleStatus();
-      return sendResponse(active ? 'plugmixer_make_active' : 'plugmixer_make_inactive');
+      return sendResponse(!!active ? 'plugmixer_make_active' : 'plugmixer_make_inactive');
     } else if (message === 'plugmixer_get_selections') {
       return sendResponse({
         'selections': selections,
@@ -80,7 +84,7 @@ Plugmixer = (function() {
 
   Plugmixer.listenFromMessenger = function(event) {
     var playlist;
-    if (active && event.data === 'plugmixer_user_playing') {
+    if (!!active && event.data === 'plugmixer_user_playing') {
       playlist = Plugmixer.getRandomPlaylist();
       if (playlist != null) {
         return playlist.activate();
@@ -92,7 +96,7 @@ Plugmixer = (function() {
   };
 
   Plugmixer.showIcon = function() {
-    if (active) {
+    if (!!active) {
       return chrome.runtime.sendMessage('plugmixer_make_active');
     } else {
       return chrome.runtime.sendMessage('plugmixer_make_inactive');
@@ -100,8 +104,8 @@ Plugmixer = (function() {
   };
 
   Plugmixer.toggleStatus = function() {
-    active = !active;
-    Plugmixer.save('status', active ? 1 : 0);
+    active = !!active ? 0 : 1;
+    Plugmixer.savePlaylists();
     return Plugmixer.showIcon();
   };
 
@@ -109,6 +113,13 @@ Plugmixer = (function() {
     return $.makeArray(playlists.filter(Playlist.isEnabled)).map(function(playlist) {
       return playlist.name;
     });
+  };
+
+  Plugmixer.getEnabledPlaylistsUnshift = function(value) {
+    var enabledPlaylists;
+    enabledPlaylists = Plugmixer.getEnabledPlaylists();
+    enabledPlaylists.unshift(value);
+    return enabledPlaylists;
   };
 
   Plugmixer.chooseSelection = function(selectionId) {
@@ -135,12 +146,10 @@ Plugmixer = (function() {
   };
 
   Plugmixer.saveSelection = function(name) {
-    var enabledPlaylists, selection, selectionId;
+    var selection, selectionId;
     selectionId = Date.now().toString();
     selection = {};
-    enabledPlaylists = Plugmixer.getEnabledPlaylists();
-    enabledPlaylists.unshift(name);
-    selection[selectionId] = enabledPlaylists;
+    selection[selectionId] = Plugmixer.getEnabledPlaylistsUnshift(name);
     chrome.storage.sync.set(selection);
     selections.unshift(selectionId);
     Plugmixer.save('selections', selections);
@@ -174,48 +183,129 @@ Plugmixer = (function() {
     return null;
   };
 
-  Plugmixer.load = function() {
-    return chrome.storage.sync.get(['playlists', 'status', userId], function(data) {
-      var playlist, savedPlaylist, savedPlaylists, _i, _j, _k, _l, _len, _len1, _len2, _len3;
-      if ((data.playlists != null) && (data.status != null) && (data[userId] == null)) {
-        savedPlaylists = JSON.parse(data.playlists);
-        for (_i = 0, _len = playlists.length; _i < _len; _i++) {
-          playlist = playlists[_i];
-          for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
-            savedPlaylist = savedPlaylists[_j];
-            if (playlist.name === savedPlaylist.name && !savedPlaylist.enabled) {
-              playlist.disable();
-            }
+  Plugmixer.getRoomId = function() {
+    var id;
+    id = window.location.pathname;
+    return id.substring(1, id.length - 1);
+  };
+
+  Plugmixer.isCurrentRoomFavorite = function() {
+    return $('#room-bar .favorite').hasClass('selected');
+  };
+
+  Plugmixer.saveRoomPlaylist = function(name) {
+    var roomPlaylists;
+    roomPlaylists = {};
+    roomPlaylists[userId + '_' + name] = Plugmixer.getEnabledPlaylistsUnshift(active);
+    return chrome.storage.sync.set(roomPlaylists);
+  };
+
+  Plugmixer.updateFavorites = function(callback) {
+    if (Plugmixer.isCurrentRoomFavorite()) {
+      if (favorites.indexOf(Plugmixer.getRoomId()) === -1) {
+        favorites.push(Plugmixer.getRoomId());
+        Plugmixer.save('favorites', favorites);
+        return callback(lastPlayedIn, true);
+      } else {
+        return callback(Plugmixer.getRoomId(), false);
+      }
+    } else {
+      if (favorites.indexOf(Plugmixer.getRoomId()) > -1) {
+        favorites.splice(favorites.indexOf(Plugmixer.getRoomId()), 1);
+        Plugmixer.save('favorites', favorites);
+        chrome.storage.sync.remove(userId + '_' + Plugmixer.getRoomId());
+      }
+      return callback(lastPlayedIn, false);
+    }
+  };
+
+  Plugmixer.savePlaylists = function() {
+    if (Plugmixer.isCurrentRoomFavorite()) {
+      lastPlayedIn = Plugmixer.getRoomId();
+    } else {
+      lastPlayedIn = 'default';
+    }
+    return Plugmixer.updateFavorites(function(roomId) {
+      Plugmixer.saveRoomPlaylist(roomId);
+      return Plugmixer.save('lastPlayedIn', roomId);
+    });
+  };
+
+  Plugmixer.loadPlaylists = function(location, toSave) {
+    var identifier;
+    identifier = userId + '_' + location;
+    return chrome.storage.sync.get(identifier, function(data) {
+      var enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
+      active = data[identifier].splice(0, 1)[0];
+      for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+        playlist = playlists[_i];
+        enable = false;
+        _ref = data[identifier];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          enabledPlaylist = _ref[_j];
+          if (playlist.name === enabledPlaylist) {
+            enable = true;
           }
         }
-        Plugmixer.savePlaylists();
-        active = data.status;
-        Plugmixer.save('status', active ? 1 : 0);
-        chrome.storage.sync.remove(['playlists', 'status']);
-      } else {
-        if (data[userId] != null) {
-          userData = data[userId];
+        if (enable) {
+          playlist.enable();
+        } else {
+          playlist.disable();
         }
+      }
+      if (toSave) {
+        Plugmixer.savePlaylists();
+      }
+      return Plugmixer.showIcon();
+    });
+  };
+
+  Plugmixer.load = function() {
+    return chrome.storage.sync.get(userId, function(data) {
+      var enable, enabledPlaylist, playlist, savedPlaylists, _i, _j, _len, _len1;
+      if (data[userId] != null) {
+        userData = data[userId];
+      }
+      if ((userData.status != null) || (userData.playlists != null)) {
         if (userData.status != null) {
-          active = !!userData.status;
+          active = userData.status;
+          delete userData.status;
         }
         if (userData.playlists != null) {
           savedPlaylists = JSON.parse(userData.playlists);
-          for (_k = 0, _len2 = playlists.length; _k < _len2; _k++) {
-            playlist = playlists[_k];
-            for (_l = 0, _len3 = savedPlaylists.length; _l < _len3; _l++) {
-              savedPlaylist = savedPlaylists[_l];
-              if (playlist.name === savedPlaylist.n && !savedPlaylist.e) {
-                playlist.disable();
+          for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+            playlist = playlists[_i];
+            enable = false;
+            for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
+              enabledPlaylist = savedPlaylists[_j];
+              if (playlist.name === enabledPlaylist.n && enabledPlaylist.e) {
+                enable = true;
               }
             }
+            if (enable) {
+              playlist.enable();
+            } else {
+              playlist.disable();
+            }
           }
+          delete userData.playlists;
         }
+        Plugmixer.savePlaylists();
+        return Plugmixer.showIcon();
+      } else {
         if (userData.selections != null) {
           selections = userData.selections;
         }
+        if (userData.lastPlayedIn != null) {
+          lastPlayedIn = userData.lastPlayedIn;
+        }
+        if (userData.favorites != null) {
+          favorites = userData.favorites;
+          return Plugmixer.updateFavorites(function(roomId, toSave) {
+            return Plugmixer.loadPlaylists(roomId, toSave);
+          });
+        }
       }
-      return Plugmixer.showIcon();
     });
   };
 
@@ -227,24 +317,12 @@ Plugmixer = (function() {
     return chrome.storage.sync.set(data);
   };
 
-  Plugmixer.savePlaylists = function() {
-    var playlistsCondensed;
-    playlistsCondensed = $.makeArray(playlists).map(function(playlist) {
-      return {
-        n: playlist.name,
-        e: playlist.enabled
-      };
-    });
-    playlistsCondensed = JSON.stringify(playlistsCondensed);
-    return Plugmixer.save('playlists', playlistsCondensed);
-  };
-
   Playlist = (function() {
     function Playlist(dom) {
       this.dom = dom;
       this.name = this.dom.children('span.name').text();
       this.count = parseInt(this.dom.children('span.count').text());
-      this.enabled = true;
+      this.enabled = false;
       this.applyTrigger();
     }
 
