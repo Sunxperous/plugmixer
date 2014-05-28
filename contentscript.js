@@ -269,49 +269,57 @@ Plugmixer = (function() {
 
   Plugmixer.load = function() {
     return chrome.storage.sync.get(userId, function(data) {
-      var enable, enabledPlaylist, playlist, savedPlaylists, _i, _j, _len, _len1;
+      var enable, enabledPlaylist, playlist, savedPlaylists, _i, _j, _k, _len, _len1, _len2, _results;
       if (data[userId] != null) {
         userData = data[userId];
-      }
-      if (userData.selections != null) {
-        selections = userData.selections;
-      }
-      if ((userData.status != null) || (userData.playlists != null)) {
-        if (userData.status != null) {
-          active = userData.status;
-          delete userData.status;
+        if (userData.selections != null) {
+          selections = userData.selections;
         }
-        if (userData.playlists != null) {
-          savedPlaylists = JSON.parse(userData.playlists);
-          for (_i = 0, _len = playlists.length; _i < _len; _i++) {
-            playlist = playlists[_i];
-            enable = false;
-            for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
-              enabledPlaylist = savedPlaylists[_j];
-              if (playlist.name === enabledPlaylist.n && enabledPlaylist.e) {
-                enable = true;
+        if ((userData.status != null) || (userData.playlists != null)) {
+          if (userData.status != null) {
+            active = userData.status;
+            delete userData.status;
+          }
+          if (userData.playlists != null) {
+            savedPlaylists = JSON.parse(userData.playlists);
+            for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+              playlist = playlists[_i];
+              enable = false;
+              for (_j = 0, _len1 = savedPlaylists.length; _j < _len1; _j++) {
+                enabledPlaylist = savedPlaylists[_j];
+                if (playlist.name === enabledPlaylist.n && enabledPlaylist.e) {
+                  enable = true;
+                }
+              }
+              if (enable) {
+                playlist.enable();
+              } else {
+                playlist.disable();
               }
             }
-            if (enable) {
-              playlist.enable();
-            } else {
-              playlist.disable();
-            }
+            delete userData.playlists;
           }
-          delete userData.playlists;
+          Plugmixer.savePlaylists();
+          return Plugmixer.showIcon();
+        } else {
+          if (userData.lastPlayedIn != null) {
+            lastPlayedIn = userData.lastPlayedIn;
+          }
+          if (userData.favorites != null) {
+            favorites = userData.favorites;
+            return Plugmixer.updateFavorites(function(roomId, toSave) {
+              return Plugmixer.loadPlaylists(roomId, toSave);
+            });
+          }
         }
-        Plugmixer.savePlaylists();
-        return Plugmixer.showIcon();
       } else {
-        if (userData.lastPlayedIn != null) {
-          lastPlayedIn = userData.lastPlayedIn;
+        Plugmixer.showIcon();
+        _results = [];
+        for (_k = 0, _len2 = playlists.length; _k < _len2; _k++) {
+          playlist = playlists[_k];
+          _results.push(playlist.enable());
         }
-        if (userData.favorites != null) {
-          favorites = userData.favorites;
-          return Plugmixer.updateFavorites(function(roomId, toSave) {
-            return Plugmixer.loadPlaylists(roomId, toSave);
-          });
-        }
+        return _results;
       }
     });
   };

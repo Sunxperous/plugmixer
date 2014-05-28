@@ -189,38 +189,45 @@ class Plugmixer
 
 
   @load: =>
-    chrome.storage.sync.get userId, (data) => 
-      userData = data[userId] if data[userId]?
+    chrome.storage.sync.get userId, (data) =>
+      if data[userId]?
+        userData = data[userId]
 
-      if userData.selections?
-        selections = userData.selections
+        if userData.selections?
+          selections = userData.selections
 
-      # Old version compatibility.
-      if userData.status? or userData.playlists?
-        if userData.status?
-          active = userData.status
-          delete userData.status
-        if userData.playlists?
-          savedPlaylists = JSON.parse(userData.playlists)
-          for playlist in playlists
-            enable = false
-            for enabledPlaylist in savedPlaylists
-              if playlist.name == enabledPlaylist.n and enabledPlaylist.e
-                enable = true
-            if enable then playlist.enable() else playlist.disable()
-          delete userData.playlists
+        # Old version compatibility.
+        if userData.status? or userData.playlists?
+          if userData.status?
+            active = userData.status
+            delete userData.status
+          if userData.playlists?
+            savedPlaylists = JSON.parse(userData.playlists)
+            for playlist in playlists
+              enable = false
+              for enabledPlaylist in savedPlaylists
+                if playlist.name == enabledPlaylist.n and enabledPlaylist.e
+                  enable = true
+              if enable then playlist.enable() else playlist.disable()
+            delete userData.playlists
 
-        @savePlaylists()
+          @savePlaylists()
+          @showIcon()
+
+        # New storage version.
+        else
+          if userData.lastPlayedIn?
+            lastPlayedIn = userData.lastPlayedIn
+          if userData.favorites?
+            favorites = userData.favorites
+            @updateFavorites (roomId, toSave) =>
+              @loadPlaylists roomId, toSave
+
+      # New user.       
+      else 
         @showIcon()
-
-      # New storage version.
-      else
-        if userData.lastPlayedIn?
-          lastPlayedIn = userData.lastPlayedIn
-        if userData.favorites?
-          favorites = userData.favorites
-          @updateFavorites (roomId, toSave) =>
-            @loadPlaylists roomId, toSave
+        for playlist in playlists
+          playlist.enable()
 
 
   @save: (key, value) =>
