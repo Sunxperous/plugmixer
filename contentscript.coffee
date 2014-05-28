@@ -76,8 +76,7 @@ class Plugmixer
 
   @toggleStatus: =>
     active = if !!active then 0 else 1
-    #@save 'status', active
-    @savePlaylists()
+    @savePlaylists() # Also saves status.
     @showIcon()
 
   @getEnabledPlaylists: =>
@@ -177,13 +176,19 @@ class Plugmixer
       @savePlaylists() if toSave
       @showIcon()
 
+      activated = playlists.filter(Playlist.isActivated)[0]
+      if !activated.enabled
+        playlist = @getRandomPlaylist()
+        if playlist? then playlist.activate()
+
+
   @load: =>
     chrome.storage.sync.get userId, (data) => 
       userData = data[userId] if data[userId]?
 
       if userData.selections?
         selections = userData.selections
-        
+
       # Old version compatibility.
       if userData.status? or userData.playlists?
         if userData.status?
@@ -240,6 +245,10 @@ class Plugmixer
     @isEnabled = (index) ->
       # this refers to filtered objects.
       return this.enabled
+
+    @isActivated = (index) ->
+      # this refers to filtered objects.
+      return this.dom.children('.activate-button').css('display') == 'block'
 
     applyTrigger: ->
       @dom.children('span.count').click (event) =>

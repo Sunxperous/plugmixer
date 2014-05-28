@@ -235,7 +235,7 @@ Plugmixer = (function() {
     var identifier;
     identifier = userId + '_' + location;
     return chrome.storage.sync.get(identifier, function(data) {
-      var enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
+      var activated, enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
       active = data[identifier].splice(0, 1)[0];
       for (_i = 0, _len = playlists.length; _i < _len; _i++) {
         playlist = playlists[_i];
@@ -256,7 +256,14 @@ Plugmixer = (function() {
       if (toSave) {
         Plugmixer.savePlaylists();
       }
-      return Plugmixer.showIcon();
+      Plugmixer.showIcon();
+      activated = playlists.filter(Playlist.isActivated)[0];
+      if (!activated.enabled) {
+        playlist = Plugmixer.getRandomPlaylist();
+        if (playlist != null) {
+          return playlist.activate();
+        }
+      }
     });
   };
 
@@ -347,6 +354,10 @@ Plugmixer = (function() {
 
     Playlist.isEnabled = function(index) {
       return this.enabled;
+    };
+
+    Playlist.isActivated = function(index) {
+      return this.dom.children('.activate-button').css('display') === 'block';
     };
 
     Playlist.prototype.applyTrigger = function() {
