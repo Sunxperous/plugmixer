@@ -3,7 +3,7 @@
 
   "name": "Plugmixer",
   "description": "Overcome the 200 item count limit in plug.dj playlists!",
-  "version": "1.0.0",
+  "version": "1.1.0",
 
   "permissions": [
     "http://plug.dj/",
