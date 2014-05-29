@@ -41,6 +41,15 @@ class Plugmixer
     inject.src = chrome.extension.getURL 'apimessenger.js'
     (document.head || document.documentElement).appendChild inject
 
+    # Update message.
+    chrome.storage.sync.get 'updated', (data) ->
+      if data.updated
+        chrome.storage.sync.set 'updated': false
+        window.postMessage
+          about: 'plugmixer_send_chat',
+          message: 'Plugmixer has been updated! https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm/details'
+          , '*'
+
   @listenFromBackground: (message, sender, sendResponse) =>
     if message == 'plugmixer_toggle_status'
       @toggleStatus()

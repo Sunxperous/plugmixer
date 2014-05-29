@@ -42,5 +42,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponseTo) {
 });
 
 chrome.runtime.onInstalled.addListener(function(details) {
-  return chrome.storage.sync.remove('indicator');
+  chrome.storage.sync.remove('indicator');
+  if (details.previousVersion != null) {
+    return chrome.storage.sync.set({
+      'updated': true
+    });
+  }
 });

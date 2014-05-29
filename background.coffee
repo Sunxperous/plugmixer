@@ -26,3 +26,5 @@ chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
 
 chrome.runtime.onInstalled.addListener (details) ->
   chrome.storage.sync.remove 'indicator'
+  if details.previousVersion?
+    chrome.storage.sync.set 'updated': true

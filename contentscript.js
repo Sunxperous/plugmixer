@@ -55,7 +55,18 @@ Plugmixer = (function() {
     chrome.runtime.onMessage.addListener(Plugmixer.listenFromBackground);
     inject = document.createElement('script');
     inject.src = chrome.extension.getURL('apimessenger.js');
-    return (document.head || document.documentElement).appendChild(inject);
+    (document.head || document.documentElement).appendChild(inject);
+    return chrome.storage.sync.get('updated', function(data) {
+      if (data.updated) {
+        chrome.storage.sync.set({
+          'updated': false
+        });
+        return window.postMessage({
+          about: 'plugmixer_send_chat',
+          message: 'Plugmixer has been updated! https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm/details'
+        }, '*');
+      }
+    });
   };
 
   Plugmixer.listenFromBackground = function(message, sender, sendResponse) {
