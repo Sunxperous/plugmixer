@@ -2,8 +2,10 @@
   "manifest_version": 2,
 
   "name": "Plugmixer",
+  "short_name": "Plugmixer",
   "description": "Overcome the 200 item count limit in plug.dj playlists!",
-  "version": "1.1.0",
+  "author": "Sun Wang Jun",
+  "version": "1.1.1",
 
   "permissions": [
     "http://plug.dj/",
