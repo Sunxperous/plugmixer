@@ -89,11 +89,17 @@ class Plugmixer
   @listenFromMessenger: (event) =>
     if !!active and event.data == 'plugmixer_user_playing'
       @refreshIfRequired()
-      playlist = @getRandomPlaylist()
-      if playlist? then playlist.activate()
+      @activateRandomPlaylist()
     else if event.data.about? and event.data.about == 'plugmixer_user_info'
       userId = event.data.userId
       @load() # Ready to load from storage.
+
+  @activateRandomPlaylist: =>
+    playlist = @getRandomPlaylist()
+    if playlist? then playlist.activate()
+
+  @numPlaylistsEnabled: =>
+    return playlists.filter(Playlist.isEnabled).length
 
   @showIcon: =>
     if !!active # Active
@@ -279,7 +285,13 @@ class Plugmixer
       @dom.fadeTo(FADE_DURATION, 1)
 
     toggle: ->
-      if @enabled then @disable() else @enable()
+      if @enabled
+        @disable()
+        if @dom.children('.activate-button').css('display') == 'block' # Is currently activated...
+          Plugmixer.activateRandomPlaylist()
+      else
+        @enable()
+        @activate() if Plugmixer.numPlaylistsEnabled() == 1
       Plugmixer.savePlaylists()
 
     @isEnabled = (index) ->

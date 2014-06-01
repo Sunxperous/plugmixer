@@ -127,17 +127,25 @@ Plugmixer = (function() {
   };
 
   Plugmixer.listenFromMessenger = function(event) {
-    var playlist;
     if (!!active && event.data === 'plugmixer_user_playing') {
       Plugmixer.refreshIfRequired();
-      playlist = Plugmixer.getRandomPlaylist();
-      if (playlist != null) {
-        return playlist.activate();
-      }
+      return Plugmixer.activateRandomPlaylist();
     } else if ((event.data.about != null) && event.data.about === 'plugmixer_user_info') {
       userId = event.data.userId;
       return Plugmixer.load();
     }
+  };
+
+  Plugmixer.activateRandomPlaylist = function() {
+    var playlist;
+    playlist = Plugmixer.getRandomPlaylist();
+    if (playlist != null) {
+      return playlist.activate();
+    }
+  };
+
+  Plugmixer.numPlaylistsEnabled = function() {
+    return playlists.filter(Playlist.isEnabled).length;
   };
 
   Plugmixer.showIcon = function() {
@@ -399,8 +407,14 @@ Plugmixer = (function() {
     Playlist.prototype.toggle = function() {
       if (this.enabled) {
         this.disable();
+        if (this.dom.children('.activate-button').css('display') === 'block') {
+          Plugmixer.activateRandomPlaylist();
+        }
       } else {
         this.enable();
+        if (Plugmixer.numPlaylistsEnabled() === 1) {
+          this.activate();
+        }
       }
       return Plugmixer.savePlaylists();
     };
