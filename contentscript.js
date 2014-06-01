@@ -69,6 +69,39 @@ Plugmixer = (function() {
     });
   };
 
+  Plugmixer.refreshIfRequired = function() {
+    var enable, playlist, playlistsDom, refresh, refreshedPlaylist, refreshedPlaylists, _i, _j, _k, _len, _len1, _len2;
+    refresh = true;
+    for (_i = 0, _len = playlists.length; _i < _len; _i++) {
+      playlist = playlists[_i];
+      if (playlist.dom.parent().length !== 0) {
+        refresh = false;
+      }
+    }
+    if (refresh) {
+      playlistsDom = $('#playlist-menu div.row');
+      refreshedPlaylists = playlistsDom.map(function(i, pDom) {
+        return new Playlist($(pDom));
+      });
+      for (_j = 0, _len1 = refreshedPlaylists.length; _j < _len1; _j++) {
+        refreshedPlaylist = refreshedPlaylists[_j];
+        enable = false;
+        for (_k = 0, _len2 = playlists.length; _k < _len2; _k++) {
+          playlist = playlists[_k];
+          if (refreshedPlaylist.name === playlist.name) {
+            enable = playlist.enabled;
+          }
+        }
+        if (enable) {
+          refreshedPlaylist.enable();
+        } else {
+          refreshedPlaylist.disable();
+        }
+      }
+      return playlists = refreshedPlaylists;
+    }
+  };
+
   Plugmixer.listenFromBackground = function(message, sender, sendResponse) {
     var selectionId;
     if (message === 'plugmixer_toggle_status') {
@@ -96,6 +129,7 @@ Plugmixer = (function() {
   Plugmixer.listenFromMessenger = function(event) {
     var playlist;
     if (!!active && event.data === 'plugmixer_user_playing') {
+      Plugmixer.refreshIfRequired();
       playlist = Plugmixer.getRandomPlaylist();
       if (playlist != null) {
         return playlist.activate();
@@ -318,10 +352,10 @@ Plugmixer = (function() {
           }
           if (userData.favorites != null) {
             favorites = userData.favorites;
-            return Plugmixer.updateFavorites(function(roomId, toSave) {
-              return Plugmixer.loadPlaylists(roomId, toSave);
-            });
           }
+          return Plugmixer.updateFavorites(function(roomId, toSave) {
+            return Plugmixer.loadPlaylists(roomId, toSave);
+          });
         }
       } else {
         Plugmixer.showIcon();

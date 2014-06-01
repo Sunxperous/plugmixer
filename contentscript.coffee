@@ -50,6 +50,23 @@ class Plugmixer
           message: 'Plugmixer has been updated! https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm/details'
           , '*'
 
+  @refreshIfRequired: =>
+    refresh = true
+    for playlist in playlists
+      if playlist.dom.parent().length != 0 then refresh = false
+    # Read playlists.
+    if refresh
+      playlistsDom = $('#playlist-menu div.row')
+      refreshedPlaylists = playlistsDom.map (i, pDom) ->
+        new Playlist($(pDom))
+      for refreshedPlaylist in refreshedPlaylists
+        enable = false
+        for playlist in playlists
+          if refreshedPlaylist.name == playlist.name
+            enable = playlist.enabled
+        if enable then refreshedPlaylist.enable() else refreshedPlaylist.disable()
+      playlists = refreshedPlaylists
+
   @listenFromBackground: (message, sender, sendResponse) =>
     if message == 'plugmixer_toggle_status'
       @toggleStatus()
@@ -71,6 +88,7 @@ class Plugmixer
 
   @listenFromMessenger: (event) =>
     if !!active and event.data == 'plugmixer_user_playing'
+      @refreshIfRequired()
       playlist = @getRandomPlaylist()
       if playlist? then playlist.activate()
     else if event.data.about? and event.data.about == 'plugmixer_user_info'
@@ -196,7 +214,6 @@ class Plugmixer
         playlist = @getRandomPlaylist()
         if playlist? then playlist.activate()
 
-
   @load: =>
     chrome.storage.sync.get userId, (data) =>
       if data[userId]?
@@ -229,8 +246,8 @@ class Plugmixer
             lastPlayedIn = userData.lastPlayedIn
           if userData.favorites?
             favorites = userData.favorites
-            @updateFavorites (roomId, toSave) =>
-              @loadPlaylists roomId, toSave
+          @updateFavorites (roomId, toSave) =>
+            @loadPlaylists roomId, toSave
 
       # New user.       
       else 
