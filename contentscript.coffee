@@ -290,7 +290,7 @@ class Plugmixer
     toggle: ->
       if @enabled
         @disable()
-        if @dom.children('.activate-button').css('display') == 'block' # Is currently activated...
+        if @dom.children('.activate-button').children('i.icon').eq(0).hasClass 'icon-active-selected' # Is currently activated...
           Plugmixer.activateRandomPlaylist()
       else
         @enable()
@@ -303,7 +303,7 @@ class Plugmixer
 
     @isActivated = (index) ->
       # this refers to filtered objects.
-      return this.dom.children('.activate-button').css('display') == 'block'
+      return this.dom.children('.activate-button').children('i.icon').eq(0).hasClass 'icon-active-selected'
 
     applyTrigger: ->
       @dom.children('span.count').click (event) =>

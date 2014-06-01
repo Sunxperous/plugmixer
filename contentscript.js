@@ -410,7 +410,7 @@ Plugmixer = (function() {
     Playlist.prototype.toggle = function() {
       if (this.enabled) {
         this.disable();
-        if (this.dom.children('.activate-button').css('display') === 'block') {
+        if (this.dom.children('.activate-button').children('i.icon').eq(0).hasClass('icon-active-selected')) {
           Plugmixer.activateRandomPlaylist();
         }
       } else {
@@ -427,7 +427,7 @@ Plugmixer = (function() {
     };
 
     Playlist.isActivated = function(index) {
-      return this.dom.children('.activate-button').css('display') === 'block';
+      return this.dom.children('.activate-button').children('i.icon').eq(0).hasClass('icon-active-selected');
     };
 
     Playlist.prototype.applyTrigger = function() {

@@ -5,7 +5,7 @@
   "short_name": "Plugmixer",
   "description": "Overcome the 200 item count limit in plug.dj playlists!",
   "author": "Sun Wang Jun",
-  "version": "1.1.1",
+  "version": "1.1.2",
 
   "permissions": [
     "http://plug.dj/",
