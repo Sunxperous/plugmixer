@@ -136,6 +136,14 @@ Plugmixer = (function() {
     }
   };
 
+  Plugmixer.activateAnotherIfNotEnabled = function() {
+    var activated;
+    activated = playlists.filter(Playlist.isActivated)[0];
+    if (!activated.enabled) {
+      return Plugmixer.activateRandomPlaylist();
+    }
+  };
+
   Plugmixer.activateRandomPlaylist = function() {
     var playlist;
     playlist = Plugmixer.getRandomPlaylist();
@@ -194,7 +202,8 @@ Plugmixer = (function() {
           playlist.disable();
         }
       }
-      return Plugmixer.savePlaylists();
+      Plugmixer.savePlaylists();
+      return Plugmixer.activateAnotherIfNotEnabled();
     });
   };
 
@@ -288,7 +297,7 @@ Plugmixer = (function() {
     var identifier;
     identifier = userId + '_' + location;
     return chrome.storage.sync.get(identifier, function(data) {
-      var activated, enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
+      var enable, enabledPlaylist, playlist, _i, _j, _len, _len1, _ref;
       active = data[identifier].splice(0, 1)[0];
       for (_i = 0, _len = playlists.length; _i < _len; _i++) {
         playlist = playlists[_i];
@@ -310,13 +319,7 @@ Plugmixer = (function() {
         Plugmixer.savePlaylists();
       }
       Plugmixer.showIcon();
-      activated = playlists.filter(Playlist.isActivated)[0];
-      if (!activated.enabled) {
-        playlist = Plugmixer.getRandomPlaylist();
-        if (playlist != null) {
-          return playlist.activate();
-        }
-      }
+      return Plugmixer.activateAnotherIfNotEnabled();
     });
   };
 

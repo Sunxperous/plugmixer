@@ -94,6 +94,11 @@ class Plugmixer
       userId = event.data.userId
       @load() # Ready to load from storage.
 
+  @activateAnotherIfNotEnabled: =>
+      # If currently activated playlist is not part of selection...
+      activated = playlists.filter(Playlist.isActivated)[0]
+      @activateRandomPlaylist() if !activated.enabled
+
   @activateRandomPlaylist: =>
     playlist = @getRandomPlaylist()
     if playlist? then playlist.activate()
@@ -130,6 +135,8 @@ class Plugmixer
             enable = true
         if enable then playlist.enable() else playlist.disable()
       @savePlaylists()
+
+      @activateAnotherIfNotEnabled()
 
   @saveSelection: (name) =>
     selectionId = Date.now().toString()
@@ -214,11 +221,7 @@ class Plugmixer
       @savePlaylists() if toSave
       @showIcon() # Activity determined after load.
 
-      # If currently activated playlist is not part of selection...
-      activated = playlists.filter(Playlist.isActivated)[0]
-      if !activated.enabled
-        playlist = @getRandomPlaylist()
-        if playlist? then playlist.activate()
+      @activateAnotherIfNotEnabled()
 
   @load: =>
     chrome.storage.sync.get userId, (data) =>
