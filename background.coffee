@@ -4,7 +4,7 @@ INACTIVE_ICON_19  = 'images/icon19bw.png'
 INACTIVE_ICON_38  = 'images/icon38bw.png'
 ACTIVE_ICON_19    = 'images/icon19.png'
 ACTIVE_ICON_38    = 'images/icon38.png'
-NOTIFY_IF         = '1.1.1'
+NOTIFY_IF         = '1.1.3'
 
 chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
   switch message

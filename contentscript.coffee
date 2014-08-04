@@ -96,6 +96,7 @@ class Plugmixer
 
   @activateAnotherIfNotEnabled: =>
       # If currently activated playlist is not part of selection...
+      return if !active # Do not enable if Plugmixer is inactive.
       activated = playlists.filter(Playlist.isActivated)[0]
       @activateRandomPlaylist() if !activated.enabled
 
@@ -158,13 +159,13 @@ class Plugmixer
   @getRandomPlaylist: =>
     countSum = 0
     for playlist in playlists.filter Playlist.isEnabled
-      countSum += playlist.count
+      countSum += playlist.count()
     playlistCount = playlists.length
     weightedSelect = Math.floor(Math.random() * countSum)
     for playlist in playlists.filter Playlist.isEnabled
-      if weightedSelect < playlist.count
+      if weightedSelect < playlist.count()
         return playlist
-      weightedSelect -= playlist.count
+      weightedSelect -= playlist.count()
     null
 
   @getRoomId: =>
@@ -210,7 +211,7 @@ class Plugmixer
   @loadPlaylists: (location, toSave) =>
     identifier = userId + '_' + location
     chrome.storage.sync.get identifier, (data) =>
-      active = data[identifier].splice(0, 1)[0]
+      active = data[identifier].splice(0, 1)[0] # Retrieves Plugmixer status.
       for playlist in playlists
         enable = false
         for enabledPlaylist in data[identifier] # Remaining data are enabled playlists.
@@ -274,10 +275,12 @@ class Plugmixer
   class Playlist
     constructor: (@dom) ->
       @name = @dom.children('span.name').text()
-      @count = parseInt(@dom.children('span.count').text())
       @enabled = false
 
       @applyTrigger()
+
+    count: ->
+      return parseInt(@dom.children('span.count').text())
 
     disable: ->
       @enabled = false
