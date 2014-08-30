@@ -1,14 +1,20 @@
 'use strict'
 
-INITIALIZATION_TIMER = 256
-INITIALIZATION_TTL   = 192
-FADE_DURATION        = 0.3
-FADE_OPACITY         = 0.4
+INITIALIZATION_TIMER    = 256
+INITIALIZATION_TTL      = 192
+FADE_DURATION           = 0.3
+FADE_OPACITY            = 0.4
+PLAYLIST_MENU_DIV_ROW   = '#playlist-menu div.row'
+ROOM_BAR_FAVORITE       = '#room-bar .favorite'
+ACTIVATE_BUTTON         = '.activate-button'
+PLAYLIST_CLASS_SELECTED = 'icon-active-active'
+PLAYLIST_SPAN_COUNT     = 'span.count'
+PLAYLIST_SPAN_NAME      = 'span.name'
 
 ttl = 0
 waitForPlaylists = ->
   ttl++
-  if $('#playlist-menu div.row').length != 0
+  if $(PLAYLIST_MENU_DIV_ROW).length != 0
     Plugmixer.initialize()
   else if ttl <= INITIALIZATION_TTL
     console.log 'waiting for playlists...'
@@ -28,7 +34,7 @@ class Plugmixer
 
   @initialize: =>
     # Read playlists.
-    playlistsDom = $('#playlist-menu div.row')
+    playlistsDom = $(PLAYLIST_MENU_DIV_ROW)
     playlists = playlistsDom.map (i, pDom) ->
       new Playlist($(pDom))
 
@@ -56,7 +62,7 @@ class Plugmixer
       if playlist.dom.parent().length != 0 then refresh = false
     # Read playlists.
     if refresh
-      playlistsDom = $('#playlist-menu div.row')
+      playlistsDom = $(PLAYLIST_MENU_DIV_ROW)
       refreshedPlaylists = playlistsDom.map (i, pDom) ->
         new Playlist($(pDom))
       for refreshedPlaylist in refreshedPlaylists
@@ -173,7 +179,7 @@ class Plugmixer
     return id.substring 1, id.length - 1
 
   @isCurrentRoomFavorite: =>
-    $('#room-bar .favorite').hasClass 'selected'
+    $(ROOM_BAR_FAVORITE).hasClass 'selected'
 
   @saveRoomPlaylist: (name) =>
     roomPlaylists = {}
@@ -274,13 +280,13 @@ class Plugmixer
 
   class Playlist
     constructor: (@dom) ->
-      @name = @dom.children('span.name').text()
+      @name = @dom.children(PLAYLIST_SPAN_NAME).text()
       @enabled = false
 
       @applyTrigger()
 
     count: ->
-      return parseInt(@dom.children('span.count').text())
+      return parseInt(@dom.children(PLAYLIST_SPAN_COUNT).text())
 
     disable: ->
       @enabled = false
@@ -293,7 +299,7 @@ class Plugmixer
     toggle: ->
       if @enabled
         @disable()
-        if @dom.children('.activate-button').children('i.icon').eq(0).hasClass 'icon-active-selected' # Is currently activated...
+        if @isCurrentlyActivated()
           Plugmixer.activateRandomPlaylist()
       else
         @enable()
@@ -306,10 +312,13 @@ class Plugmixer
 
     @isActivated = (index) ->
       # this refers to filtered objects.
-      return this.dom.children('.activate-button').children('i.icon').eq(0).hasClass 'icon-active-selected'
+      return this.isCurrentlyActivated()
+
+    isCurrentlyActivated: ->
+      return @dom.children(ACTIVATE_BUTTON).children('i.icon').eq(0).hasClass PLAYLIST_CLASS_SELECTED
 
     applyTrigger: ->
-      @dom.children('span.count').click (event) =>
+      @dom.children(PLAYLIST_SPAN_COUNT).click (event) =>
         @toggle()
 
     clickDom: ->
@@ -320,7 +329,7 @@ class Plugmixer
 
     activate: ->
       @clickDom()
-      $('.activate-button').eq(0).click() # Clicks one button, works for all playlists.
+      $(ACTIVATE_BUTTON).eq(0).click() # Clicks one button, works for all playlists.
       window.postMessage
         about: 'plugmixer_send_chat',
         message: 'Next playing from ' + @name + '.'
