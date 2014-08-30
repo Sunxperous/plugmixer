@@ -98,6 +98,7 @@ class Plugmixer
       @activateRandomPlaylist()
     else if event.data.about? and event.data.about == 'plugmixer_user_info'
       userId = event.data.userId
+      return if !userId?
       @load() # Ready to load from storage.
 
   @activateAnotherIfNotEnabled: =>
@@ -176,7 +177,7 @@ class Plugmixer
 
   @getRoomId: =>
     id = window.location.pathname
-    return id.substring 1, id.length - 1
+    return id.substring 1, id.length
 
   @isCurrentRoomFavorite: =>
     $(ROOM_BAR_FAVORITE).hasClass 'selected'
@@ -237,33 +238,12 @@ class Plugmixer
 
         if userData.selections?
           selections = userData.selections
-
-        # Old version compatibility.
-        if userData.status? or userData.playlists?
-          if userData.status?
-            active = userData.status
-            delete userData.status
-          if userData.playlists?
-            savedPlaylists = JSON.parse(userData.playlists)
-            for playlist in playlists
-              enable = false
-              for enabledPlaylist in savedPlaylists
-                if playlist.name == enabledPlaylist.n and enabledPlaylist.e
-                  enable = true
-              if enable then playlist.enable() else playlist.disable()
-            delete userData.playlists
-
-          @savePlaylists()
-          @showIcon()
-
-        # New storage version.
-        else
-          if userData.lastPlayedIn?
-            lastPlayedIn = userData.lastPlayedIn
-          if userData.favorites?
-            favorites = userData.favorites
-          @updateFavorites (roomId, toSave) =>
-            @loadPlaylists roomId, toSave
+        if userData.lastPlayedIn?
+          lastPlayedIn = userData.lastPlayedIn
+        if userData.favorites?
+          favorites = userData.favorites
+        @updateFavorites (roomId, toSave) =>
+          @loadPlaylists roomId, toSave
 
       # New user.       
       else 

@@ -4,7 +4,7 @@ INACTIVE_ICON_19  = 'images/icon19bw.png'
 INACTIVE_ICON_38  = 'images/icon38bw.png'
 ACTIVE_ICON_19    = 'images/icon19.png'
 ACTIVE_ICON_38    = 'images/icon38.png'
-NOTIFY_IF         = '1.1.3'
+NOTIFY_IF         = '1.2.0'
 
 chrome.runtime.onMessage.addListener (message, sender, sendResponseTo) ->
   switch message
@@ -32,3 +32,6 @@ chrome.runtime.onInstalled.addListener (details) ->
     curr = chrome.runtime.getManifest().version.split '.'
     if curr[0] > prev[0] or (curr[0] == prev[0] and curr[1] > prev[1]) or chrome.runtime.getManifest().version == NOTIFY_IF
       chrome.storage.sync.set 'updated': true
+
+    if chrome.runtime.getManifest().version == '1.2.0'
+      chrome.storage.sync.clear()
