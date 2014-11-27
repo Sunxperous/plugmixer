@@ -10,7 +10,6 @@ class Plugmixer
     if $(PLAYLIST_MENU_DIV_ROW).length != 0 and API.getUser().id? and API.extended
       initialize()
     else
-      console.log 'Plugmixer.start'
       setTimeout @start, INITIALIZATION_TIMEOUT
 
   initialize = ->
@@ -18,55 +17,65 @@ class Plugmixer
     Listener.initializeWindowMessage()
     User.initialize()
 
+
+  ###
+  # User management.
+  ###
   class User
     @id: null
     @favorites: []
     @selections: []
-    @lastPlayedIn: 'default'
+    @lastPlayedIn: 'default' # Assume last played in default room.
 
     @initialize: ->
-      console.log 'User.initialize'
       @id = API.getUser().id
       Storage.load 'user', @id
 
     @update: (response) ->
-      console.log 'User.update', response
       @favorites = response.favorites || @favorites
       @selections = response.selections || @selections
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
 
+
+  ###
+  # Room management.
+  ###
   class Room
     @id: null
     @active: 1
 
     @initialize: ->
-      console.log 'Room.initialize'
       @id = API.getRoom().id
       Playlists.initialize()
       Storage.load 'room', @id
 
     getStatus = =>
-      console.log 'Room.getStatus'
       status = Playlists.getEnabled().map (playlist) ->
         return playlist.name
       status.unshift @active
       return status
 
     @update: (response) -> # Response is a Room data array.
-      console.log 'Room.update', response
-      if !response? # Non-existing room
+      if !response? # Non-existing room...
         @active = 1
         @save()
-      else
+      else # Existing room...
         @active = response.splice(0, 1)[0]
         Playlists.update response # Remainder of response contains playlist data.
       Listener.initializeAPI()
 
     @save: ->
-      console.log 'Room.save'
       Storage.save 'room', @id, getStatus()
 
+
+  ###
+  # Event listeners.
+  ###
   class Listener
+
+    ###
+    # Window message listener.
+    ###
     @initializeWindowMessage: ->
       window.addEventListener 'message', (event) ->
         try
@@ -77,13 +86,15 @@ class Plugmixer
         return if !data.plugmixer?
 
         if data.plugmixer == 'response'
-          console.log 'Listener.message response', data
           switch data.type
-            when 'user'
+            when 'user' # Should only happen once.
               User.update data.response
               Room.initialize()
             when 'room' then Room.update data.response
 
+    ###
+    # API listener.
+    ###
     @initializeAPI: ->
       Helper.TitleText.update()
       API.on API.ADVANCE, (data) ->
@@ -91,16 +102,22 @@ class Plugmixer
         if data.dj? and data.dj.username == API.getUser().username
           Playlists.activateRandom()
 
+
+  ###
+  # Miscellaneous features.
+  ###
   class Helper
     @TitleText: class TitleText
       TITLE_TEXT = '#now-playing-media .bar-value'
       @update: ->
-        console.log 'Helper.TitleText.update'
         $(TITLE_TEXT).attr 'title', $(TITLE_TEXT).text() # Hover text.
 
+
+  ###
+  # Window message passer to storage.
+  ###
   class Storage
     @load: (type, query) ->
-      console.log 'Storage.load', type, query
       jsonString = JSON.stringify
         plugmixer: 'load'
         type: type
@@ -108,7 +125,6 @@ class Plugmixer
       window.postMessage jsonString, '*'
 
     @save: (type, query, data) ->
-      console.log 'Storage.save', type, query, data
       jsonString = JSON.stringify
         plugmixer: 'save'
         type: type
@@ -116,51 +132,48 @@ class Plugmixer
         data: data
       window.postMessage jsonString, '*'
 
+
+  ###
+  # Playlists management.
+  ###
   class Playlists
     playlists = []
     activePlaylist = null
 
     @initialize: ->
-      console.log 'Playlists.initialize'
       playlists = API.getPlaylists().map (playlist) ->
         return new Playlist(playlist)
       activePlaylist = @getActivated()
 
     @getEnabled = ->
-      console.log 'Playlists.getEnabled'
       return playlists.filter (playlist, index) ->
         return playlist.enabled
 
     @getActivated = ->
-      console.log 'Playlists.getActivated'
       return (playlists.filter (playlist, index) ->
         return playlist.isActive()
       )[0]
 
     @update: (playlistNames) ->
-      console.log 'Playlists.update', playlistNames
       playlists.forEach (playlist) ->
         enable = false
         for playlistName in playlistNames
           if playlist.name == playlistName then enable = true
         if enable then playlist.enable() else playlist.disable()
 
-      @activateAnother()
+      @activateAnother() # Activates a random playlist even if current selected is active. 
 
     @activateAnother: (playlist) ->
-      console.log 'Playlists.activateAnother'
       return if playlist? and playlist != activePlaylist # Do nothing if not the same playlist.
       @activateRandom() # if !@getActivated().enabled
 
     @activateRandom: ->
-      console.log 'Playlists.activateRandom'
       return if Room.active != 1 # Do nothing if not active.
       playlist = @getRandom()
       activePlaylist = playlist
       if playlist? then playlist.activate()
 
     @getRandom = ->
-      console.log 'Playlists.getRandom'
       countSum = 0
       activePlaylists = @getEnabled()
       for playlist in activePlaylists
@@ -172,7 +185,9 @@ class Plugmixer
         weightedSelect -= playlist.count()
       null
 
+    ###
     # Playlist object.
+    ###
     class Playlist
       FADE_DURATION   = 0.3
       FADE_OPACITY    = 0.4
@@ -205,8 +220,7 @@ class Plugmixer
       toggle: ->
         if @enabled
           @disable()
-          # Only activate another if this playlist is active.
-          if @isActivating() or @isActive()
+          if @isActivating() or @isActive() # Only activate another if this playlist is active.
             Playlists.activateAnother(@)
         else
           @enable()
@@ -230,6 +244,7 @@ class Plugmixer
       isActive: ->
         return @dom.children(ACTIVATE_BUTTON)
           .children('i.icon').eq(0).hasClass ACTIVE_CLASS
+
 
 console.log 'plugmixer.js loaded'
 Plugmixer.start()
