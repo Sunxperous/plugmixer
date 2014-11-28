@@ -63,9 +63,14 @@ class Plugmixer
         @active = response.splice(0, 1)[0]
         Playlists.update response # Remainder of response contains playlist data.
       Listener.initializeAPI()
+      Interface.initialize()
 
     @save: ->
       Storage.save 'room', @id, getStatus()
+
+    @toggleActive: ->
+      @active = if @active == 1 then 0 else 1
+      @save()
 
 
   ###
@@ -90,7 +95,7 @@ class Plugmixer
             when 'user' # Should only happen once.
               User.update data.response
               Room.initialize()
-            when 'room' then Room.update data.response
+            when 'room' then Room.update data.response # Should only happen once.
 
     ###
     # API listener.
@@ -242,8 +247,35 @@ class Plugmixer
       isActivating: ->
         return @dom.children(SPINNER).length > 0
       isActive: ->
-        return @dom.children(ACTIVATE_BUTTON)
-          .children('i.icon').eq(0).hasClass ACTIVE_CLASS
+        return @dom.children(ACTIVATE_BUTTON).children('i.icon').eq(0).hasClass ACTIVE_CLASS
+
+
+  ###
+  # Interface.
+  ###
+  class Interface
+    LOGO_COLORED_SRC = 'https://localhost:8080/images/icon38.png'
+    LOGO_BW_SRC      = 'https://localhost:8080/images/icon38bw.png' # Black and white.
+    DIV_HTML_SRC     = 'https://localhost:8080/core/plugmixer.html'
+    PARENT_DIV       = '#room'
+    PLUGMIXER_DIV    = '#plugmixer'
+    PLUGMIXER_LOGO   = '#plugmixer-logo'
+    DROPDOWN_DIV     = '#plugmixer-expanded'
+
+    @initialize: ->
+      $.get DIV_HTML_SRC, (divHtml) =>
+        $(PARENT_DIV).append divHtml
+        @updateLogo()
+
+        $(PLUGMIXER_DIV).click (event) =>
+          Room.toggleActive()
+          @updateLogo()
+
+    @updateLogo: ->
+      $(PLUGMIXER_LOGO).attr 'src', if Room.active then LOGO_COLORED_SRC else LOGO_BW_SRC
+      
+
+
 
 
 console.log 'plugmixer.js loaded'
