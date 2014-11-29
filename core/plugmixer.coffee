@@ -258,12 +258,16 @@ class Plugmixer
     LOGO_BW_SRC         = 'https://localhost:8080/images/icon38bw.png' # Black and white.
     DIV_HTML_SRC        = 'https://localhost:8080/core/plugmixer.html'
     PARENT_DIV          = '#room'
-    PLUGMIXER_DIV       = '#plugmixer'
-    PLUGMIXER_LOGO      = '#plugmixer-logo'
-    PLUGMIXER_STATUS_ID = 'plugmixer-status'
-    PLUGMIXER_ACTIVE    = '#plugmixer-active'
-    PLUGMIXER_INACTIVE  = '#plugmixer-inactive'
-    DROPDOWN_DIV        = '#plugmixer-expanded'
+    MAIN_DIV            = '#plugmixer'
+    BAR_DIV             = '#plugmixer-bar'
+    BAR_LOGO            = '#plugmixer-logo'
+    STATUS_DIV_ID       = 'plugmixer-status'
+    STATUS_ACTIVE_DIV   = '#plugmixer-active'
+    STATUS_INACTIVE_DIV = '#plugmixer-inactive'
+    EXPANDED_DIV        = '#plugmixer-expanded'
+    HIDE_CLASS          = 'plugmixer-hide'
+    DROPDOWN_ARROW_DIV  = '#plugmixer-dropdown-arrow'
+    ROTATE_CLASS        = 'plugmixer-rotate'
 
     @initialize: ->
       # Retrieves the html.
@@ -271,21 +275,28 @@ class Plugmixer
         $(PARENT_DIV).append divHtml
         @updateInterfaceStatus()
 
-        # Binds the click event.
-        $(PLUGMIXER_DIV).click (event) =>
-          if event.target.offsetParent.id == PLUGMIXER_STATUS_ID
+        # Then bind the events:
+        $(BAR_DIV).click (event) =>
+          if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
             @updateInterfaceStatus()
+          else
+            $(EXPANDED_DIV).toggleClass HIDE_CLASS
+            $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
+
+        $(MAIN_DIV).mouseleave (event) =>
+          $(EXPANDED_DIV).addClass HIDE_CLASS
+          $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
 
     @updateInterfaceStatus: ->
       if Room.active
-        $(PLUGMIXER_LOGO).attr 'src', LOGO_COLORED_SRC
-        $(PLUGMIXER_INACTIVE).removeClass 'show'
-        $(PLUGMIXER_ACTIVE).addClass 'show'
+        $(BAR_LOGO).attr 'src', LOGO_COLORED_SRC
+        $(STATUS_INACTIVE_DIV).removeClass 'show'
+        $(STATUS_ACTIVE_DIV).addClass 'show'
       else
-        $(PLUGMIXER_LOGO).attr 'src', LOGO_BW_SRC
-        $(PLUGMIXER_ACTIVE).removeClass 'show'
-        $(PLUGMIXER_INACTIVE).addClass 'show'
+        $(BAR_LOGO).attr 'src', LOGO_BW_SRC
+        $(STATUS_ACTIVE_DIV).removeClass 'show'
+        $(STATUS_INACTIVE_DIV).addClass 'show'
 
 
 console.log 'plugmixer.js loaded'

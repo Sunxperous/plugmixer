@@ -1,40 +1,46 @@
 <div id="plugmixer">
   <style type="text/css" scoped>
+
     #plugmixer {
       position: absolute;
       top: 59px;
       left: 4px;
       width: 38px;
-      padding: 4px;
-      cursor: pointer;
       font-family: 'Open Sans', sans-serif;
       color: #333;
       border-radius: 4px;
       z-index: 40;
       transition: all 0.5s ease-out;
       white-space: nowrap;
+      border: 4px solid #000;
       overflow: hidden;
     }
     #plugmixer:hover {
       width: 320px;
-      background-color: rgba(255, 255, 255, 1);
+      border-color: #fff;
     }
 
     #plugmixer-bar {
       box-sizing: border-box;
-      height: 38px;
+      height: 40px;
+      transition: all 0.5s ease-out;
+    }
+    #plugmixer:hover #plugmixer-bar {
+      background-color: rgba(255, 255, 255, 1);
     }
 
     #plugmixer-bar-text {
       display: inline-block;
       vertical-align: top;
       padding: 0 16px;
-      height: 38px;
+      height: 40px;
       line-height: 38px;
     }
 
     #plugmixer-logo {
       display: inline-block;
+      vertical-align: top;
+      cursor: pointer;
     }
 
     #plugmixer-title {
@@ -50,9 +56,11 @@
       position: relative;
       padding: 0 24px;
       width: 50px;
-      height: 38px;
-      line-height: 38px;
+      height: 40px;
+      line-height: 40px;
+      margin-bottom: -1px;
       vertical-align: top;
+      cursor: pointer;
     }
     #plugmixer-status div { /* Both active and inactive. */
       width: 50px;
@@ -64,37 +72,57 @@
     }
     #plugmixer-status div.show {
       opacity: 1;
-      transition: all 0.25s ease-out;
     }
     #plugmixer-active { top: 19px; }
     #plugmixer-inactive { bottom: 19px; }
     #plugmixer-active.show { color: #6c6; top: 0; }
     #plugmixer-inactive.show { color: #c66; bottom: 0; }
 
-
     #plugmixer-dropdown-arrow {
+      cursor: pointer;
       position: absolute;
       right: 16px;
-      top: 4px;
+      top: 0;
       font-size: 18px;
-      height: 38px;
-      line-height: 38px;
+      height: 40px;
+      line-height: 40px;
       visibility: hidden;
-      transition: visibility 0.25s linear;
+      transition: visibility 0.25s linear, transform 0.25s linear;
     }
     #plugmixer:hover #plugmixer-dropdown-arrow {
       visibility: visible;
-      transition: visibility 0.25s linear 0.25s;
+      transition: visibility 0.25s linear 0.25s, transform 0.25s linear;
+    }
+    #plugmixer-dropdown-arrow.plugmixer-rotate {
+      transform: rotateX(180deg);
     }
 
     #plugmixer-expanded {
-      width: 288px;
+      width: 320px;
       height: 352px;
+      transition: all 0.5s ease-out;
+      color: #ccc;
+      opacity: 0;
+    }
+    #plugmixer-expanded.plugmixer-hide {
+      height: 0;
+    }
+    #plugmixer:hover #plugmixer-expanded {
+      background-color: rgba(0, 0, 0, 0.85);
+      opacity: 1;
     }
 
-    .plugmixer-hide {
-      display: none;
+    #plugmixer-actions {
+      height: 32px;
     }
+    #plugmixer-actions {
+      background-color: #fff;
+    }
+
+    ul#plugmixer-selections {
+      padding: 8px;
+    }
+
   </style>
   <div id="plugmixer-bar">
     <img id="plugmixer-logo" style="display: inline-block;">
@@ -108,7 +136,11 @@
     <div id="plugmixer-dropdown-arrow">&#9660;</div>
   </div>
   <div id="plugmixer-expanded" class="plugmixer-hide">
-    <ul>
+    <div id="plugmixer-actions">
+      <button>Update</button>
+      <button>Save new group</button>
+    </div>
+    <ul id="plugmixer-selections">
       <li>Test 1</li>
       <li>Test 2</li>
     </ul>
