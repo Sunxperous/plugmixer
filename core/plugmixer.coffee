@@ -254,28 +254,38 @@ class Plugmixer
   # Interface.
   ###
   class Interface
-    LOGO_COLORED_SRC = 'https://localhost:8080/images/icon38.png'
-    LOGO_BW_SRC      = 'https://localhost:8080/images/icon38bw.png' # Black and white.
-    DIV_HTML_SRC     = 'https://localhost:8080/core/plugmixer.html'
-    PARENT_DIV       = '#room'
-    PLUGMIXER_DIV    = '#plugmixer'
-    PLUGMIXER_LOGO   = '#plugmixer-logo'
-    DROPDOWN_DIV     = '#plugmixer-expanded'
+    LOGO_COLORED_SRC    = 'https://localhost:8080/images/icon38.png'
+    LOGO_BW_SRC         = 'https://localhost:8080/images/icon38bw.png' # Black and white.
+    DIV_HTML_SRC        = 'https://localhost:8080/core/plugmixer.html'
+    PARENT_DIV          = '#room'
+    PLUGMIXER_DIV       = '#plugmixer'
+    PLUGMIXER_LOGO      = '#plugmixer-logo'
+    PLUGMIXER_STATUS_ID = 'plugmixer-status'
+    PLUGMIXER_ACTIVE    = '#plugmixer-active'
+    PLUGMIXER_INACTIVE  = '#plugmixer-inactive'
+    DROPDOWN_DIV        = '#plugmixer-expanded'
 
     @initialize: ->
+      # Retrieves the html.
       $.get DIV_HTML_SRC, (divHtml) =>
         $(PARENT_DIV).append divHtml
-        @updateLogo()
+        @updateInterfaceStatus()
 
+        # Binds the click event.
         $(PLUGMIXER_DIV).click (event) =>
-          Room.toggleActive()
-          @updateLogo()
+          if event.target.offsetParent.id == PLUGMIXER_STATUS_ID
+            Room.toggleActive()
+            @updateInterfaceStatus()
 
-    @updateLogo: ->
-      $(PLUGMIXER_LOGO).attr 'src', if Room.active then LOGO_COLORED_SRC else LOGO_BW_SRC
-      
-
-
+    @updateInterfaceStatus: ->
+      if Room.active
+        $(PLUGMIXER_LOGO).attr 'src', LOGO_COLORED_SRC
+        $(PLUGMIXER_INACTIVE).removeClass 'show'
+        $(PLUGMIXER_ACTIVE).addClass 'show'
+      else
+        $(PLUGMIXER_LOGO).attr 'src', LOGO_BW_SRC
+        $(PLUGMIXER_ACTIVE).removeClass 'show'
+        $(PLUGMIXER_INACTIVE).addClass 'show'
 
 
 console.log 'plugmixer.js loaded'
