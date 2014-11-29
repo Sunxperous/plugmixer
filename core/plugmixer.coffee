@@ -268,19 +268,21 @@ class Plugmixer
     HIDE_CLASS          = 'plugmixer-hide'
     DROPDOWN_ARROW_DIV  = '#plugmixer-dropdown-arrow'
     ROTATE_CLASS        = 'plugmixer-rotate'
+    NUMBER_DIV          = '#plugmixer-number'
 
     @initialize: ->
       # Retrieves the html.
       $.get DIV_HTML_SRC, (divHtml) =>
         $(PARENT_DIV).append divHtml
-        @updateInterfaceStatus()
+        @update()
 
         # Then bind the events:
         $(BAR_DIV).click (event) =>
           if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
-            @updateInterfaceStatus()
+            @update()
           else
+            updateNumber()
             $(EXPANDED_DIV).toggleClass HIDE_CLASS
             $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
 
@@ -288,7 +290,14 @@ class Plugmixer
           $(EXPANDED_DIV).addClass HIDE_CLASS
           $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
 
-    @updateInterfaceStatus: ->
+    @update: ->
+      updateStatus()
+      updateNumber()
+
+    updateNumber = ->
+      $(NUMBER_DIV).text Playlists.getEnabled().length
+
+    updateStatus = ->
       if Room.active
         $(BAR_LOGO).attr 'src', LOGO_COLORED_SRC
         $(STATUS_INACTIVE_DIV).removeClass 'show'
