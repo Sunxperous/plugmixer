@@ -36,6 +36,13 @@ class Plugmixer
       @selections = response.selections || @selections
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
 
+    @save: ->
+      data = {}
+      data.favorites = @favorites
+      data.selections = @selections
+      data.lastPlayedIn = @lastPlayedIn
+      Storage.save 'user', @id, data
+
 
   ###
   # Room management.
@@ -62,7 +69,9 @@ class Plugmixer
       else # Existing room...
         @active = response.splice(0, 1)[0]
         Playlists.update response # Remainder of response contains playlist data.
+
       Listener.initializeAPI()
+      Selections.initialize()
       Interface.initialize()
 
     @save: ->
@@ -96,6 +105,7 @@ class Plugmixer
               User.update data.response
               Room.initialize()
             when 'room' then Room.update data.response # Should only happen once.
+            when 'selections' then Selections.update data.response
 
     ###
     # API listener.
@@ -269,6 +279,11 @@ class Plugmixer
     DROPDOWN_ARROW_DIV  = '#plugmixer-dropdown-arrow'
     ROTATE_CLASS        = 'plugmixer-rotate'
     NUMBER_DIV          = '#plugmixer-number'
+    SELECTIONS_UL       = '#plugmixer-selections'
+    LI_SELECTIONS       = 'li.plugmixer-selection'
+    NEW_SELECTION_LI    = '#plugmixer-new-selection'
+    SAVE_NEW_BUTTON     = '#plugmixer-save-new'
+    NEW_SELECTION_INPUT = '#plugmixer-input'
 
     @initialize: ->
       # Retrieves the html.
@@ -283,16 +298,38 @@ class Plugmixer
             @update()
           else
             updateNumber()
+            updateSelections()
             $(EXPANDED_DIV).toggleClass HIDE_CLASS
             $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
 
-        $(MAIN_DIV).mouseleave (event) =>
+        $(MAIN_DIV).mouseleave (event) ->
           $(EXPANDED_DIV).addClass HIDE_CLASS
           $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
+          $(NEW_SELECTION_LI).addClass HIDE_CLASS
+          $(SAVE_NEW_BUTTON).prop 'disabled', false
+
+        $(SAVE_NEW_BUTTON).click (event) ->
+          $(NEW_SELECTION_LI).removeClass HIDE_CLASS
+          $(SAVE_NEW_BUTTON).prop 'disabled', true
+          $(NEW_SELECTION_INPUT).focus()
+
+        $(NEW_SELECTION_INPUT).keyup (event) =>
+          if event.keyCode == 13
+            Selections.add $(NEW_SELECTION_INPUT).val()
+            $(NEW_SELECTION_LI).addClass HIDE_CLASS
+            updateSelections()
+            $(SAVE_NEW_BUTTON).prop 'disabled', false
 
     @update: ->
       updateStatus()
       updateNumber()
+
+    updateSelections = ->
+      $(LI_SELECTIONS).remove()
+      Object.keys(Selections.list).forEach (selection) ->
+        li = $('<li class="plugmixer-selection">')
+        li.text Selections.list[selection][0]
+        $(SELECTIONS_UL).append li
 
     updateNumber = ->
       $(NUMBER_DIV).text Playlists.getEnabled().length
@@ -306,6 +343,35 @@ class Plugmixer
         $(BAR_LOGO).attr 'src', LOGO_BW_SRC
         $(STATUS_ACTIVE_DIV).removeClass 'show'
         $(STATUS_INACTIVE_DIV).addClass 'show'
+
+
+  ###
+  # Playlist selections management.
+  ###
+  class Selections
+    @list = {}
+
+    @initialize: ->
+      Storage.load 'selections', User.id
+
+    @update: (response) -> # Response is an object with key-values timestamp-selections.
+      @list = response
+
+    @add: (name) ->
+      timestamp = Date.now().toString()
+      selection = Playlists.getEnabled().map (playlist) ->
+        return playlist.name
+
+      # Appending to list.
+      @list[timestamp] = selection
+
+      # Saving inidividual selection.
+      selection.unshift name
+      Storage.save 'selection', timestamp, selection
+
+      # Saving user's selections (as timestamps).
+      User.selections.unshift timestamp
+      User.save()
 
 
 console.log 'plugmixer.js loaded'

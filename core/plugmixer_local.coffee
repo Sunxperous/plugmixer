@@ -22,11 +22,13 @@ class PlugmixerLocal
         switch data.type
           when 'user' then loadUser data.id
           when 'room' then loadRoom data.id
+          when 'selections' then loadSelections data.id
             
       when 'save'
         switch data.type
           when 'user' then saveUser data.id, data.data
           when 'room' then saveRoom data.id, data.data
+          when 'selection' then saveSelection data.id, data.data
 
 
   ###
@@ -77,7 +79,7 @@ class PlugmixerLocal
   #   [favorites], "lastPlayedIn", [selections]
   ###
   saveUser = (id, data) ->
-    save id, JSON.stringify
+    save '', JSON.stringify # Does not require id key for user.
       favorites: data.favorites
       lastPlayedIn: data.lastPlayedIn
       selections: data.selections
@@ -99,6 +101,28 @@ class PlugmixerLocal
   ###
   saveRoom = (roomKey, data) ->
     save roomKey, JSON.stringify data
+
+
+  ###
+  # Loads the selections of user 'id'.
+  # User should have already been loaded before.
+  ###
+  loadSelections = (id) ->
+    userData = JSON.parse load('') # Does not require id key for user.
+    selections = {}
+
+    timestamps = userData.selections
+    timestamps.forEach (timestamp) ->
+      selections[timestamp] = JSON.parse load(timestamp)
+
+    respond 'selections', selections
+
+  ###
+  # Saves selection of id 'timestamp' with the following attributes:
+  #   [name, "enabledPlaylists"...]
+  ###
+  saveSelection = (timestamp, data) ->
+    save timestamp, JSON.stringify data
 
 
   console.log 'plugmixer_local.js loaded'
