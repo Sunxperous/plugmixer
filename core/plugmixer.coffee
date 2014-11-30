@@ -176,7 +176,8 @@ class Plugmixer
           if playlist.name == playlistName then enable = true
         if enable then playlist.enable() else playlist.disable()
 
-      @activateAnother() # Activates a random playlist even if current selected is active. 
+      if not @getActivated().enabled
+        @activateAnother()
 
     @activateAnother: (playlist) ->
       return if playlist? and playlist != activePlaylist # Do nothing if not the same playlist.
@@ -281,6 +282,9 @@ class Plugmixer
     NUMBER_DIV          = '#plugmixer-number'
     SELECTIONS_UL       = '#plugmixer-selections'
     LI_SELECTIONS       = 'li.plugmixer-selection'
+    SELECTION_CLASS     = 'plugmixer-selection'
+    LI_SELECTION_SAMPLE = '#plugmixer-selection-sample'
+    IN_USE_CLASS        = 'plugmixer-in-use'
     NEW_SELECTION_LI    = '#plugmixer-new-selection'
     SAVE_NEW_BUTTON     = '#plugmixer-save-new'
     NEW_SELECTION_INPUT = '#plugmixer-input'
@@ -290,6 +294,7 @@ class Plugmixer
       $.get DIV_HTML_SRC, (divHtml) =>
         $(PARENT_DIV).append divHtml
         @update()
+        appendSelections()
 
         # Then bind the events:
         $(BAR_DIV).click (event) =>
@@ -298,7 +303,7 @@ class Plugmixer
             @update()
           else
             updateNumber()
-            updateSelections()
+            @updateSelections()
             $(EXPANDED_DIV).toggleClass HIDE_CLASS
             $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
 
@@ -315,21 +320,45 @@ class Plugmixer
 
         $(NEW_SELECTION_INPUT).keyup (event) =>
           if event.keyCode == 13
-            Selections.add $(NEW_SELECTION_INPUT).val()
+            newSelection = Selections.add $(NEW_SELECTION_INPUT).val()
             $(NEW_SELECTION_LI).addClass HIDE_CLASS
-            updateSelections()
             $(SAVE_NEW_BUTTON).prop 'disabled', false
+
+            $(NEW_SELECTION_LI).after selectionLi(newSelection[1], newSelection[0])
+
+            @updateSelections()
 
     @update: ->
       updateStatus()
       updateNumber()
 
-    updateSelections = ->
-      $(LI_SELECTIONS).remove()
-      Object.keys(Selections.list).forEach (selection) ->
-        li = $('<li class="plugmixer-selection">')
-        li.text Selections.list[selection][0]
-        $(SELECTIONS_UL).append li
+    @updateSelections: ->
+      activePlaylists = Playlists.getEnabled().map (playlist) ->
+        return playlist.name
+      $(LI_SELECTIONS).each (index) ->
+        selection = Selections.list[$(this).data 'timestamp']
+        selection = selection.slice 1, selection.length # Remove the name of the selection.
+        same = $(selection).not(activePlaylists).length == 0 and
+          $(activePlaylists).not(selection).length == 0
+        if same then $(this).addClass IN_USE_CLASS else $(this).removeClass IN_USE_CLASS
+
+    clickedSelection = (event) =>
+      Selections.use event.data
+      @updateSelections()
+      updateNumber()
+
+    selectionLi = (selection, timestamp) ->
+      li = $(LI_SELECTION_SAMPLE).clone().removeAttr('id').addClass SELECTION_CLASS
+      li.children('.plugmixer-selection-name').text selection[0]
+      li.click timestamp, clickedSelection
+      li.data 'timestamp', timestamp
+      return li
+
+    appendSelections = ->
+      Object.keys(Selections.list).sort((a, b) ->
+        return parseInt(b) - parseInt(a)
+      ).forEach (timestamp) ->
+        $(SELECTIONS_UL).append selectionLi(Selections.list[timestamp], timestamp)
 
     updateNumber = ->
       $(NUMBER_DIV).text Playlists.getEnabled().length
@@ -372,6 +401,12 @@ class Plugmixer
       # Saving user's selections (as timestamps).
       User.selections.unshift timestamp
       User.save()
+
+      return [timestamp, selection[0]]
+
+    @use: (timestamp) ->
+      selections = @list[timestamp]
+      Playlists.update(selections)
 
 
 console.log 'plugmixer.js loaded'

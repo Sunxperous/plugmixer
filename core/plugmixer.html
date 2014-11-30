@@ -199,7 +199,6 @@
     .plugmixer-selection.plugmixer-in-use {
       color: #fff;
       background-color: rgba(187, 211, 90, 0.85);
-      font-weight: 600;
     }
 
     #plugmixer-new-selection.plugmixer-hide {
@@ -212,6 +211,10 @@
       background-color: #ad87dc;
     }
 
+    #plugmixer-selection-sample {
+      display: none;
+    }
+
     #plugmixer-input {
       width: 100%;
       border: 0;
@@ -220,7 +223,6 @@
       letter-spacing: 0.05em;
       font-size: 12px;
       color: #fff;
-      font-weight: 600;
     }
 
   </style>
@@ -249,6 +251,9 @@
       <div class="plugmixer-selection plugmixer-hide" id="plugmixer-new-selection">
         <input type="text" id="plugmixer-input">
       </div>
+      <li id="plugmixer-selection-sample">
+        <div class="plugmixer-selection-name"></div>
+      </li>
     </ul>
   </div>
 </div>
