@@ -222,8 +222,7 @@ class Plugmixer
           event.preventDefault()
           event.stopPropagation();
 
-      count: ->
-        return parseInt(@dom.children(SPAN_COUNT).text())
+      count: -> return parseInt(@dom.children(SPAN_COUNT).text())
 
       disable: ->
         @enabled = false
@@ -283,7 +282,7 @@ class Plugmixer
     SELECTIONS_UL       = '#plugmixer-selections'
     LI_SELECTIONS       = 'li.plugmixer-selection'
     SELECTION_CLASS     = 'plugmixer-selection'
-    LI_SELECTION_SAMPLE = '#plugmixer-selection-sample'
+    SELECTION_SAMPLE_LI = '#plugmixer-selection-sample'
     IN_USE_CLASS        = 'plugmixer-in-use'
     NEW_SELECTION_LI    = '#plugmixer-new-selection'
     SAVE_NEW_BUTTON     = '#plugmixer-save-new'
@@ -301,64 +300,72 @@ class Plugmixer
           if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
             @update()
-          else
-            updateNumber()
-            @updateSelections()
-            $(EXPANDED_DIV).toggleClass HIDE_CLASS
-            $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
 
-        $(MAIN_DIV).mouseleave (event) ->
-          $(EXPANDED_DIV).addClass HIDE_CLASS
-          $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
-          $(NEW_SELECTION_LI).addClass HIDE_CLASS
-          $(SAVE_NEW_BUTTON).prop 'disabled', false
+          else expandInterface()
 
-        $(SAVE_NEW_BUTTON).click (event) ->
-          $(NEW_SELECTION_LI).removeClass HIDE_CLASS
-          $(SAVE_NEW_BUTTON).prop 'disabled', true
-          $(NEW_SELECTION_INPUT).focus()
+        $(MAIN_DIV).mouseleave (event) -> collapseInterface()
+
+        $(SAVE_NEW_BUTTON).click (event) -> expandNewSelection()
 
         $(NEW_SELECTION_INPUT).keyup (event) =>
-          if event.keyCode == 13
-            newSelection = Selections.add $(NEW_SELECTION_INPUT).val()
-            $(NEW_SELECTION_LI).addClass HIDE_CLASS
-            $(SAVE_NEW_BUTTON).prop 'disabled', false
+          if event.keyCode == 13 # Enter key.
+            selectionObj = Selections.add $(NEW_SELECTION_INPUT).val()
+            collapseNewSelection()
 
-            $(NEW_SELECTION_LI).after selectionLi(newSelection[1], newSelection[0])
+            $(NEW_SELECTION_LI).after selectionLi(selectionObj)
 
             @updateSelections()
+
+        $(document).on 'click', LI_SELECTIONS, clickedSelection
 
     @update: ->
       updateStatus()
       updateNumber()
 
     @updateSelections: ->
-      activePlaylists = Playlists.getEnabled().map (playlist) ->
-        return playlist.name
+      activePlaylists = Playlists.getEnabled().map (playlist) -> return playlist.name
       $(LI_SELECTIONS).each (index) ->
-        selection = Selections.list[$(this).data 'timestamp']
-        selection = selection.slice 1, selection.length # Remove the name of the selection.
-        same = $(selection).not(activePlaylists).length == 0 and
-          $(activePlaylists).not(selection).length == 0
+        selection = Selections.get $(this).data('timestamp')
+        same = $(selection.playlists).not(activePlaylists).length == 0 and
+          $(activePlaylists).not(selection.playlists).length == 0
         if same then $(this).addClass IN_USE_CLASS else $(this).removeClass IN_USE_CLASS
 
+    collapseInterface = ->
+      $(EXPANDED_DIV).addClass HIDE_CLASS
+      $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
+      $(NEW_SELECTION_LI).addClass HIDE_CLASS
+      $(SAVE_NEW_BUTTON).prop 'disabled', false
+      collapseNewSelection()
+    expandInterface = =>
+      @update()
+      @updateSelections()
+      $(EXPANDED_DIV).toggleClass HIDE_CLASS
+      $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
+
+    collapseNewSelection = ->
+      $(NEW_SELECTION_LI).addClass HIDE_CLASS
+      $(SAVE_NEW_BUTTON).prop 'disabled', false
+    expandNewSelection = ->
+      $(NEW_SELECTION_LI).removeClass HIDE_CLASS
+      $(SAVE_NEW_BUTTON).prop 'disabled', true
+      $(NEW_SELECTION_INPUT).focus()
+
     clickedSelection = (event) =>
-      Selections.use event.data
+      Selections.use $(event.currentTarget).data('timestamp') # Because $(this) is $(document).
       @updateSelections()
       updateNumber()
 
-    selectionLi = (selection, timestamp) ->
-      li = $(LI_SELECTION_SAMPLE).clone().removeAttr('id').addClass SELECTION_CLASS
-      li.children('.plugmixer-selection-name').text selection[0]
-      li.click timestamp, clickedSelection
-      li.data 'timestamp', timestamp
+    selectionLi = (selectionObj) ->
+      li = $(SELECTION_SAMPLE_LI).clone().removeAttr('id').addClass SELECTION_CLASS
+      li.children('.plugmixer-selection-name').text selectionObj.name
+      li.data 'timestamp', selectionObj.timestamp
       return li
 
     appendSelections = ->
       Object.keys(Selections.list).sort((a, b) ->
         return parseInt(b) - parseInt(a)
       ).forEach (timestamp) ->
-        $(SELECTIONS_UL).append selectionLi(Selections.list[timestamp], timestamp)
+        $(SELECTIONS_UL).append selectionLi(Selections.get(timestamp))
 
     updateNumber = ->
       $(NUMBER_DIV).text Playlists.getEnabled().length
@@ -376,6 +383,7 @@ class Plugmixer
 
   ###
   # Playlist selections management.
+  #   Timestamps are used as the key for storage of selections.
   ###
   class Selections
     @list = {}
@@ -384,29 +392,35 @@ class Plugmixer
       Storage.load 'selections', User.id
 
     @update: (response) -> # Response is an object with key-values timestamp-selections.
-      @list = response
+      Object.keys(response).forEach (timestamp) =>
+        @list[timestamp] = new Selection(timestamp, response[timestamp])
 
     @add: (name) ->
       timestamp = Date.now().toString()
-      selection = Playlists.getEnabled().map (playlist) ->
-        return playlist.name
-
-      # Appending to list.
-      @list[timestamp] = selection
+      selection = Playlists.getEnabled().map (playlist) -> return playlist.name
 
       # Saving inidividual selection.
       selection.unshift name
       Storage.save 'selection', timestamp, selection
 
+      # Appending to list.
+      @list[timestamp] = new Selection(timestamp, selection)
+
       # Saving user's selections (as timestamps).
       User.selections.unshift timestamp
       User.save()
 
-      return [timestamp, selection[0]]
+      return @get timestamp
+
+    @get: (timestamp) -> return @list[timestamp]
 
     @use: (timestamp) ->
-      selections = @list[timestamp]
-      Playlists.update(selections)
+      Playlists.update @get(timestamp).playlists
+
+    class Selection
+      constructor: (@timestamp, storedData) ->
+        @name = storedData.splice 0, 1
+        @playlists = storedData
 
 
 console.log 'plugmixer.js loaded'
