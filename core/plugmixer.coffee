@@ -72,7 +72,6 @@ class Plugmixer
 
       Listener.initializeAPI()
       Selections.initialize()
-      Interface.initialize()
 
     @save: ->
       Storage.save 'room', @id, getStatus()
@@ -300,21 +299,15 @@ class Plugmixer
           if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
             @update()
-
           else expandInterface()
 
         $(MAIN_DIV).mouseleave (event) -> collapseInterface()
 
         $(SAVE_NEW_BUTTON).click (event) -> expandNewSelection()
+        $('#plugmixer-selection-cancel').click (event) -> collapseNewSelection()
 
-        $(NEW_SELECTION_INPUT).keyup (event) =>
-          if event.keyCode == 13 # Enter key.
-            selectionObj = Selections.add $(NEW_SELECTION_INPUT).val()
-            collapseNewSelection()
-
-            $(NEW_SELECTION_LI).after selectionLi(selectionObj)
-
-            @updateSelections()
+        $(NEW_SELECTION_INPUT).keyup (event) ->
+          if event.keyCode == 13 then addNewSelection() # Enter key.
 
         $(document).on 'click', LI_SELECTIONS, clickedSelection
 
@@ -349,15 +342,32 @@ class Plugmixer
       $(NEW_SELECTION_LI).removeClass HIDE_CLASS
       $(SAVE_NEW_BUTTON).prop 'disabled', true
       $(NEW_SELECTION_INPUT).focus()
+      $(NEW_SELECTION_INPUT).val ''
+      $(NEW_SELECTION_LI).children('.plugmixer-selection-playlists')
+        .text Playlists.getEnabled().map((p) -> return p.name).join(', ')
+
+    addNewSelection = =>
+      selectionObj = Selections.add $(NEW_SELECTION_INPUT).val()
+      collapseNewSelection()
+      $(NEW_SELECTION_LI).after selectionLi(selectionObj)
+      @updateSelections()
 
     clickedSelection = (event) =>
-      Selections.use $(event.currentTarget).data('timestamp') # Because $(this) is $(document).
-      @updateSelections()
-      updateNumber()
+      console.log event
+      timestamp = $(event.currentTarget).data 'timestamp' # Because $(this) is $(document).
+      if event.target.className == 'plugmixer-selection-delete'
+        $(event.currentTarget).remove()
+        Selections.delete timestamp
+      else
+        Selections.use timestamp
+        @updateSelections()
+        updateNumber()
+        collapseNewSelection()
 
     selectionLi = (selectionObj) ->
       li = $(SELECTION_SAMPLE_LI).clone().removeAttr('id').addClass SELECTION_CLASS
       li.children('.plugmixer-selection-name').text selectionObj.name
+      li.children('.plugmixer-selection-playlists').text selectionObj.playlists.join(', ')
       li.data 'timestamp', selectionObj.timestamp
       return li
 
@@ -367,8 +377,7 @@ class Plugmixer
       ).forEach (timestamp) ->
         $(SELECTIONS_UL).append selectionLi(Selections.get(timestamp))
 
-    updateNumber = ->
-      $(NUMBER_DIV).text Playlists.getEnabled().length
+    updateNumber = -> $(NUMBER_DIV).text Playlists.getEnabled().length
 
     updateStatus = ->
       if Room.active
@@ -394,6 +403,7 @@ class Plugmixer
     @update: (response) -> # Response is an object with key-values timestamp-selections.
       Object.keys(response).forEach (timestamp) =>
         @list[timestamp] = new Selection(timestamp, response[timestamp])
+      Interface.initialize()
 
     @add: (name) ->
       timestamp = Date.now().toString()
@@ -416,6 +426,12 @@ class Plugmixer
 
     @use: (timestamp) ->
       Playlists.update @get(timestamp).playlists
+
+    @delete: (timestamp) ->
+      delete @list[timestamp]
+      User.selections.splice User.selections.indexOf(timestamp), 1
+      User.save()
+      # Storage delete.
 
     class Selection
       constructor: (@timestamp, storedData) ->

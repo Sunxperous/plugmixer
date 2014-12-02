@@ -215,13 +215,37 @@
       display: none;
     }
 
+    .plugmixer-selection-name {
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .plugmixer-selection-playlists {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 14px;
+      max-height: 14px;
+      transition: max-height 1s ease-out; /* Doesn't seem as long however. */
+    }
+    .plugmixer-in-use .plugmixer-selection-playlists,
+    #plugmixer-new-selection .plugmixer-selection-playlists {
+      max-height: 314px;
+      white-space: normal;
+    }
+
+    .plugmixer-selection-actions {
+      margin-top: 4px;
+      text-transform: uppercase;
+      text-align: right;
+      font-size: 10px;
+    }
+
     #plugmixer-input {
       width: 100%;
       border: 0;
       background-color: inherit;
       font-family: 'Open Sans', sans-serif;
       letter-spacing: 0.05em;
-      font-size: 12px;
       color: #fff;
     }
 
@@ -249,10 +273,18 @@
     </div>
     <ul id="plugmixer-selections">
       <div class="plugmixer-selection plugmixer-hide" id="plugmixer-new-selection">
-        <input type="text" id="plugmixer-input">
+        <input type="text" id="plugmixer-input" class="plugmixer-selection-name">
+        <div class="plugmixer-selection-playlists"></div>
+        <div class="plugmixer-selection-actions">
+          <span id="plugmixer-selection-cancel">Cancel</span>
+        </div>
       </div>
       <li id="plugmixer-selection-sample">
         <div class="plugmixer-selection-name"></div>
+        <div class="plugmixer-selection-playlists"></div>
+        <div class="plugmixer-selection-actions">
+          <span class="plugmixer-selection-delete">Delete</span>
+        </div>
       </li>
     </ul>
   </div>
