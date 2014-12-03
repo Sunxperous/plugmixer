@@ -1,6 +1,6 @@
 'use strict'
 
-VERSION = "2.0"
+VERSION = "2.0.0"
 
 $.getScript 'https://localhost:8080/core/extendAPI.js'
 
@@ -272,8 +272,8 @@ class Plugmixer
   # Interface.
   ###
   class Interface
-    LOGO_COLORED_SRC    = 'https://localhost:8080/images/icon38.png'
-    LOGO_BW_SRC         = 'https://localhost:8080/images/icon38bw.png' # Black and white.
+    LOGO_COLORED_SRC    = 'https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/'
+    LOGO_BW_SRC         = 'https://ae42a52fb891c966c878b145a63b7b2554d0db22-www.googledrive.com/host/0ByHWCSTdXEMLT09iUmtybnI3QXM/' # Black and white.
     DIV_HTML_SRC        = 'https://localhost:8080/core/plugmixer.html'
     PARENT_DIV          = '#room'
     MAIN_DIV            = '#plugmixer'

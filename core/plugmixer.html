@@ -272,6 +272,25 @@
       color: #111;
     }
 
+    #plugmixer input::-webkit-input-placeholder {
+      font-weight: 400;
+      color: #bbb;
+    }
+    #plugmixer input::-moz-placeholder {
+      font-weight: 400;
+      color: #bbb;
+      opacity: 1;
+    }
+    #plugmixer input::-moz-placeholder {
+      font-weight: 400;
+      color: #bbb;
+      opacity: 1;
+    }
+    #plugmixer input::-ms-input-placeholder {
+      font-weight: 400;
+      color: #bbb;
+    }
+
   </style>
   <div id="plugmixer-bar">
     <img id="plugmixer-logo" style="display: inline-block;">
@@ -296,7 +315,7 @@
     </div>
     <ul id="plugmixer-selections">
       <div class="plugmixer-selection plugmixer-hide" id="plugmixer-new-selection">
-        <input type="text" id="plugmixer-input" class="plugmixer-selection-name">
+        <input type="text" id="plugmixer-input" class="plugmixer-selection-name" placeholder="Name of group">
         <div class="plugmixer-selection-playlists"></div>
         <div class="plugmixer-selection-actions">
           <span id="plugmixer-selection-cancel">Cancel</span>
@@ -311,8 +330,8 @@
       </li>
     </ul>
     <div id="plugmixer-about">
+      <a id="plugmixer-link" href="http://plugmixer.sunwj.com" target="_blank">plugmixer.sunwj.com</a>
       <span id="plugmixer-version"></span>
-      <a id="plugmixer-link" href="http://plugmixer.sunwj.com" target="_blank">plugmixer</a>
     </div>
   </div>
 </div>
