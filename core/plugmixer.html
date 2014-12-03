@@ -101,7 +101,7 @@
 
     #plugmixer-expanded {
       width: 320px;
-      height: 352px;
+      height: 376px;
       transition: all 0.5s ease-out;
       color: #ccc;
       opacity: 0;
@@ -192,17 +192,23 @@
       letter-spacing: 0.05em;
       white-space: normal;
       word-wrap: break-word;
+      max-height: 314px;
     }
     .plugmixer-selection:hover {
-      background-color: rgba(157, 181, 60, 0.85);
+      background-color: rgba(147, 171, 50, 0.85);
     }
     .plugmixer-selection.plugmixer-in-use {
       color: #fff;
-      background-color: rgba(187, 211, 90, 0.85);
+      background-color: rgba(177, 201, 80, 0.85);
+    }
+    .plugmixer-selection.plugmixer-hide { /* Removed selection. */
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 12px;
     }
 
     #plugmixer-new-selection.plugmixer-hide {
-      max-height: 0px;
+      max-height: 0;
       overflow: hidden;
       padding: 0 12px;
     }
@@ -223,8 +229,8 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 14px;
-      max-height: 14px;
+      line-height: 16px;
+      max-height: 16px;
       transition: max-height 1s ease-out; /* Doesn't seem as long however. */
     }
     .plugmixer-in-use .plugmixer-selection-playlists,
@@ -247,6 +253,23 @@
       font-family: 'Open Sans', sans-serif;
       letter-spacing: 0.05em;
       color: #fff;
+    }
+
+    #plugmixer-about {
+      padding: 6px;
+      height: 16px;
+      line-height: 16px;
+      background-color: #fff;
+      text-align: right;
+      font-size: 10px;
+    }
+    #plugmixer-about * {
+      color: #666;
+      text-decoration: none;
+      margin-left: 16px;
+    }
+    #plugmixer-about a:hover, #plugmixer-about a:active {
+      color: #111;
     }
 
   </style>
@@ -287,5 +310,9 @@
         </div>
       </li>
     </ul>
+    <div id="plugmixer-about">
+      <span id="plugmixer-version"></span>
+      <a id="plugmixer-link" href="http://plugmixer.sunwj.com" target="_blank">plugmixer</a>
+    </div>
   </div>
 </div>

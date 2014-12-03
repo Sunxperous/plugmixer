@@ -1,5 +1,7 @@
 'use strict'
 
+VERSION = "2.0"
+
 $.getScript 'https://localhost:8080/core/extendAPI.js'
 
 class Plugmixer
@@ -291,6 +293,7 @@ class Plugmixer
       # Retrieves the html.
       $.get DIV_HTML_SRC, (divHtml) =>
         $(PARENT_DIV).append divHtml
+        $('#plugmixer-version').text 'v' + VERSION
         @update()
         appendSelections()
 
@@ -319,6 +322,7 @@ class Plugmixer
       activePlaylists = Playlists.getEnabled().map (playlist) -> return playlist.name
       $(LI_SELECTIONS).each (index) ->
         selection = Selections.get $(this).data('timestamp')
+        if not selection? then return $(this).remove() # Remove deleted selections.
         same = $(selection.playlists).not(activePlaylists).length == 0 and
           $(activePlaylists).not(selection.playlists).length == 0
         if same then $(this).addClass IN_USE_CLASS else $(this).removeClass IN_USE_CLASS
@@ -353,10 +357,9 @@ class Plugmixer
       @updateSelections()
 
     clickedSelection = (event) =>
-      console.log event
       timestamp = $(event.currentTarget).data 'timestamp' # Because $(this) is $(document).
       if event.target.className == 'plugmixer-selection-delete'
-        $(event.currentTarget).remove()
+        $(event.currentTarget).addClass HIDE_CLASS
         Selections.delete timestamp
       else
         Selections.use timestamp
