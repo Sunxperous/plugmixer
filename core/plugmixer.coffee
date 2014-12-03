@@ -148,6 +148,13 @@ class Plugmixer
         data: data
       window.postMessage jsonString, '*'
 
+    @remove: (type, query) ->
+      jsonString = JSON.stringify
+        plugmixer: 'remove'
+        type: type
+        id: query
+      window.postMessage jsonString, '*'
+
 
   ###
   # Playlists management.
@@ -434,7 +441,7 @@ class Plugmixer
       delete @list[timestamp]
       User.selections.splice User.selections.indexOf(timestamp), 1
       User.save()
-      # Storage delete.
+      Storage.remove 'selection', timestamp
 
     class Selection
       constructor: (@timestamp, storedData) ->

@@ -30,6 +30,10 @@ class PlugmixerLocal
           when 'room' then saveRoom data.id, data.data
           when 'selection' then saveSelection data.id, data.data
 
+      when 'remove'
+        switch data.type
+          when 'selection' then removeSelection data.id
+
 
   ###
   # Window message sender.
@@ -54,6 +58,13 @@ class PlugmixerLocal
   load = (key) ->
     fullKey = PREFIX + userId + '_' + key
     return localStorage.getItem fullKey
+
+  ###
+  # Removes key from local storage.
+  ###
+  remove = (key) ->
+    fullKey = PREFIX + userId + '_' + key
+    localStorage.removeItem fullKey
 
 
   ###
@@ -123,6 +134,12 @@ class PlugmixerLocal
   ###
   saveSelection = (timestamp, data) ->
     save timestamp, JSON.stringify data
+
+  ###
+  # Removes selection of id 'timestamp'.
+  ###
+  removeSelection = (timestamp) ->
+    remove timestamp
 
 
   console.log 'plugmixer_local.js loaded'
