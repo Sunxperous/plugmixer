@@ -1,8 +1,11 @@
+`if (typeof EXTEND_API === 'undefined') { EXTEND_API = 'https://localhost:8080/core/extendAPI.js'; }`
+`if (typeof PLUGMIXER_HTML === 'undefined') { PLUGMIXER_HTML = 'https://localhost:8080/core/plugmixer.html'; }`
+
 'use strict'
 
 VERSION = "2.0.0"
 
-$.getScript 'https://localhost:8080/core/extendAPI.js'
+$.getScript EXTEND_API
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -274,7 +277,8 @@ class Plugmixer
   class Interface
     LOGO_COLORED_SRC    = 'https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/'
     LOGO_BW_SRC         = 'https://ae42a52fb891c966c878b145a63b7b2554d0db22-www.googledrive.com/host/0ByHWCSTdXEMLT09iUmtybnI3QXM/' # Black and white.
-    DIV_HTML_SRC        = 'https://localhost:8080/core/plugmixer.html'
+    DIV_HTML_SRC        = PLUGMIXER_HTML
+
     PARENT_DIV          = '#room'
     MAIN_DIV            = '#plugmixer'
     BAR_DIV             = '#plugmixer-bar'

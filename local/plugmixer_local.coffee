@@ -1,9 +1,11 @@
+`if (typeof PLUGMIXER_CORE === 'undefined') { PLUGMIXER_CORE = 'https://localhost:8080/core/plugmixer.js'; }`
+
 'use strict'
 
 VERSION = "2.0.0"
 
 # Inject plugmixer.js
-$.getScript 'https://localhost:8080/core/plugmixer.js'
+$.getScript PLUGMIXER_CORE
 
 class PlugmixerLocal
   PREFIX = 'plugmixer_'
