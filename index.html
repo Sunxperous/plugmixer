@@ -1,89 +1,21 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Plugmixer by Sunxperous</title>
+---
+layout: default
+---
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>Plugmixer</h1>
-        <p>plug.dj script/extension to overcome the 200 item count limit in playlists</p>
+<div class="home">
 
-        <p class="view"><a href="https://github.com/Sunxperous/plugmixer">View the Project on GitHub <small>Sunxperous/plugmixer</small></a></p>
+  <h1 class="page-heading">Updates</h1>
 
+  <ul class="post-list">
+    {% for post in site.posts %}
+      <li>
+        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
 
-        <ul>
-          <li><a href="https://github.com/Sunxperous/plugmixer/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/Sunxperous/plugmixer/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/Sunxperous/plugmixer">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h1>
-<a id="-plugmixer" class="anchor" href="#-plugmixer" aria-hidden="true"><span class="octicon octicon-link"></span></a>
-<img src="https://raw.githubusercontent.com/Sunxperous/plugmixer/master/images/icon48.png" alt=""> Plugmixer</h1>
+        <h2>
+          <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+        </h2>
+      </li>
+    {% endfor %}
+  </ul>
 
-<h4>
-<a id="overcome-the-200-item-count-limit-in-plugdj-playlists-with-this-script" class="anchor" href="#overcome-the-200-item-count-limit-in-plugdj-playlists-with-this-script" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overcome the 200 item count limit in plug.dj playlists with this script!</h4>
-
-<p>This plug.dj script/extension allows you to play music from two or more of your playlists without having to activate them manually. Each time you DJ, one playlist will be activated randomly for your next turn.</p>
-
-<p><a href="https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png" alt=""></a></p>
-
-<h2>
-<a id="bookmark-script" class="anchor" href="#bookmark-script" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bookmark script</h2>
-
-<h3>
-<a id="activating-the-script" class="anchor" href="#activating-the-script" aria-hidden="true"><span class="octicon octicon-link"></span></a>Activating the script</h3>
-
-<p>Copy and save the following as a bookmark:</p>
-
-<pre><code>javascript:(function(){$.getScript('https://dl.dropboxusercontent.com/u/10543516/plugmixer.js');}());
-</code></pre>
-
-<p>Click the bookmark when you are in plug.dj, and an indicator should show near the bottom right corner of the screen.</p>
-
-<h3>
-<a id="disabling-playlists" class="anchor" href="#disabling-playlists" aria-hidden="true"><span class="octicon octicon-link"></span></a>Disabling playlists</h3>
-
-<p>Click on a playlist's <strong>item count</strong> in the playlist menu to disable it. Disabled playlists are faded, and will not be activated by Plugmixer.</p>
-
-<p>Clicking on the <strong>item count</strong> again enables the playlist.</p>
-
-<p>Note that playlist states are <em>not persistent</em> across <strong>bookmarked script</strong> loads. All playlists will be re-enabled on each script load, and as such, also on each plug.dj refresh.</p>
-
-<p>Playlist states are <em>persistent</em> on the Chrome extension.</p>
-
-<h3>
-<a id="deactivating-plugmixer" class="anchor" href="#deactivating-plugmixer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deactivating Plugmixer</h3>
-
-<p>Click on the <strong>Active</strong> button on the Plugmixer indicator to deactivate Plugmixer.</p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/Sunxperous">Sunxperous</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-51104720-1");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
-
-  </body>
-</html>
+</div>

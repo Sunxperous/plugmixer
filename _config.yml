@@ -1,0 +1,15 @@
+# Site settings
+title: Plugmixer
+email: plugmixer@sunwj.com
+description: >
+  Playlist management for plug.dj!
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://plugmixer.sunwj.com" # the base hostname & protocol for your site
+twitter_username: plugmixer
+github_username: sunxperous
+
+# Build settings
+markdown: kramdown
+
+encoding: utf-8
+highlighter: rouge
