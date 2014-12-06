@@ -7,6 +7,7 @@ baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://plugmixer.sunwj.com" # the base hostname & protocol for your site
 twitter_username: plugmixer
 github_username: sunxperous
+github_repository: plugmixer
 
 # Build settings
 markdown: kramdown

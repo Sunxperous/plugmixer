@@ -1,21 +1,23 @@
 ---
 layout: default
 ---
+<main>
+  <a class="script bar">
+    <div class="description">
+      <div class="caption">Bookmark and run the script</div>
+      <div class="monospace subcaption">
+        javascript:(function(){$.getScript('https://plugmixer.sunwj.com/local');}());
+      </div>
+    </div>
+  </a>
 
-<div class="home">
-
-  <h1 class="page-heading">Updates</h1>
-
-  <ul class="post-list">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
-
-        <h2>
-          <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        </h2>
-      </li>
-    {% endfor %}
-  </ul>
-
-</div>
+  <a class="chrome bar" href="https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm" target="_blank">
+    <div class="description">
+      <div class="caption">Install the Google Chrome extension</div>
+      <div class="subcaption">https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm</div>
+    </div>
+    <div class="image">
+      <img src="https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_340x96.png">
+    </div>
+  </a>
+</main>
