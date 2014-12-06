@@ -5,13 +5,12 @@
 
 VERSION = "2.0.0"
 
-$.getScript EXTEND_API
-
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
   PLAYLIST_MENU_DIV_ROW  = '#playlist-menu div.row'
 
   @start: =>
+    if $? and API? and !API.extended then $.getScript EXTEND_API
     if $(PLAYLIST_MENU_DIV_ROW).length != 0 and API.getUser().id? and API.extended
       initialize()
     else
@@ -388,7 +387,9 @@ class Plugmixer
 
     appendSelections = ->
       Object.keys(Selections.list).sort((a, b) ->
-        return parseInt(b) - parseInt(a)
+        if a > b then return -1
+        if a < b then return 1
+        return 0
       ).forEach (timestamp) ->
         $(SELECTIONS_UL).append selectionLi(Selections.get(timestamp))
 
@@ -415,9 +416,10 @@ class Plugmixer
     @initialize: ->
       Storage.load 'selections', User.id
 
-    @update: (response) -> # Response is an object with key-values timestamp-selections.
-      Object.keys(response).forEach (timestamp) =>
-        @list[timestamp] = new Selection(timestamp, response[timestamp])
+    @update: (response) -> # Response is an object with key-values selectionKey-selections.
+      Object.keys(response).forEach (selectionKey) =>
+        timestamp = selectionKey.slice selectionKey.indexOf('_') + 1, selectionKey.length
+        @list[timestamp] = new Selection(timestamp, response[selectionKey])
       Interface.initialize()
 
     @add: (name) ->

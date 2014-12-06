@@ -3,27 +3,27 @@
 
   "name": "Plugmixer",
   "short_name": "Plugmixer",
-  "description": "Overcome the 200 item count limit in plug.dj playlists!",
+  "description": "Playlist management for plug.dj!",
   "author": "Sun Wang Jun",
-  "version": "1.2.0",
+  "version": "2.0.0",
 
   "permissions": [
     "https://plug.dj/",
     "storage"
   ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["chrome/background.js"],
     "persistent": false
   },
   "content_scripts": [
     {
       "matches": ["https://plug.dj/*"],
-      "js": ["jquery-2.1.1.min.js","contentscript.js"]
+      "js": ["chrome/contentscript.js"]
     }
   ],
   "web_accessible_resources": [
-    "apimessenger.js"
   ],
+  "content_security_policy": "script-src 'self' https://localhost:8080 https://*.googledrive.com/; object-src 'self'",
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
@@ -35,6 +35,6 @@
       "38": "images/icon38.png"
     },
     "default_title": "Plugmixer",
-    "default_popup": "popup.html"
+    "default_popup": "chrome/popup.html"
   }
 }

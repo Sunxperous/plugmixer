@@ -128,7 +128,8 @@ class PlugmixerLocal
 
     timestamps = userData.selections
     timestamps.forEach (timestamp) ->
-      selections[timestamp] = JSON.parse load(timestamp)
+      # userId prefix for consistency with Chrome extension.
+      selections[userId + '_' + timestamp] = JSON.parse load(timestamp)
 
     respond 'selections', selections
 

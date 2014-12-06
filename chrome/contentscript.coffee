@@ -1,316 +1,163 @@
+`if (typeof PLUGMIXER_CORE === 'undefined') { PLUGMIXER_CORE = 'https://localhost:8080/core/plugmixer.js'; }`
+
 'use strict'
 
-INITIALIZATION_TIMER    = 256
-INITIALIZATION_TTL      = 192
-FADE_DURATION           = 0.3
-FADE_OPACITY            = 0.4
-PLAYLIST_MENU_DIV_ROW   = '#playlist-menu div.row'
-ROOM_BAR_FAVORITE       = '#room-bar .favorite'
-ACTIVATE_BUTTON         = '.activate-button'
-PLAYLIST_CLASS_SELECTED = 'icon-active-active'
-PLAYLIST_SPAN_COUNT     = 'span.count'
-PLAYLIST_SPAN_NAME      = 'span.name'
+VERSION = "2.0.0"
 
-ttl = 0
-waitForPlaylists = ->
-  ttl++
-  if $(PLAYLIST_MENU_DIV_ROW).length != 0
-    Plugmixer.initialize()
-  else if ttl <= INITIALIZATION_TTL
-    console.log 'waiting for playlists...'
-    setTimeout waitForPlaylists, INITIALIZATION_TIMER
+# Inject plugmixer.js.
+inject = document.createElement 'script'
+inject.src = PLUGMIXER_CORE
+(document.head || document.documentElement).appendChild inject
 
-waitForPlaylists()
+# Show the icon in the address bar.
+chrome.runtime.sendMessage 'plugmixer_show_icon'
 
-class Plugmixer
-  playlists = null
-  active = 1
+class PlugmixerLocal
+  PREFIX = ''
   userId = null
-  userData = {}
-  favorites = []
-  selections = []
-  selectionInUse = null
-  lastPlayedIn = 'default'
 
-  @initialize: =>
-    # Read playlists.
-    playlistsDom = $(PLAYLIST_MENU_DIV_ROW)
-    playlists = playlistsDom.map (i, pDom) ->
-      new Playlist($(pDom))
+  ###
+  # Window message listener.
+  ###
+  window.addEventListener 'message', (event) ->
+    try
+      data = JSON.parse event.data
+    catch e # Not JSON parsable.
+      return false
+    return if not data.plugmixer?
 
-    # Listeners.
-    window.addEventListener 'message', @listenFromMessenger
-    chrome.runtime.onMessage.addListener @listenFromBackground
+    switch data.plugmixer
+      when 'load'
+        switch data.type
+          when 'user' then loadUser data.id
+          when 'room' then loadRoom data.id
+          when 'selections' then loadSelections data.id
+            
+      when 'save'
+        switch data.type
+          when 'user' then saveUser data.id, data.data
+          when 'room' then saveRoom data.id, data.data
+          when 'selection' then saveSelection data.id, data.data
 
-    # Inject apimessenger.js.
-    inject = document.createElement 'script'
-    inject.src = chrome.extension.getURL 'apimessenger.js'
-    (document.head || document.documentElement).appendChild inject
-
-    # Update message.
-    chrome.storage.sync.get 'updated', (data) ->
-      if data.updated
-        chrome.storage.sync.set 'updated': false
-        window.postMessage
-          about: 'plugmixer_send_chat',
-          message: 'Plugmixer has been updated! https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm/details'
-          , '*'
-
-  @refreshIfRequired: =>
-    refresh = true
-    for playlist in playlists
-      if playlist.dom.parent().length != 0 then refresh = false
-    # Read playlists.
-    if refresh
-      playlistsDom = $(PLAYLIST_MENU_DIV_ROW)
-      refreshedPlaylists = playlistsDom.map (i, pDom) ->
-        new Playlist($(pDom))
-      for refreshedPlaylist in refreshedPlaylists
-        enable = false
-        for playlist in playlists
-          if refreshedPlaylist.name == playlist.name
-            enable = playlist.enabled
-        if enable then refreshedPlaylist.enable() else refreshedPlaylist.disable()
-      playlists = refreshedPlaylists
-
-  @listenFromBackground: (message, sender, sendResponse) =>
-    if message == 'plugmixer_toggle_status'
-      @toggleStatus()
-      sendResponse(if !!active then 'plugmixer_make_active' else 'plugmixer_make_inactive')
-    else if message == 'plugmixer_get_selections'
-      sendResponse 
-        'selections': selections,
-        'activePlaylists': @getEnabledPlaylists()
-    else if message.about == 'plugmixer_save_selection'
-      selectionId = @saveSelection message.name
-      sendResponse 
-        about: 'plugmixer_selection_saved'
-        selectionId: selectionId
-    else if message.about == 'plugmixer_delete_selection'
-      @deleteSelection message.selectionId
-      sendResponse 'plugmixer_selection_deleted'
-    else if message.about == 'plugmixer_choose_selection'
-      @chooseSelection message.selectionId
-
-  @listenFromMessenger: (event) =>
-    if !!active and event.data == 'plugmixer_user_playing'
-      @refreshIfRequired()
-      @activateRandomPlaylist()
-    else if event.data.about? and event.data.about == 'plugmixer_user_info'
-      userId = event.data.userId
-      return if !userId?
-      @load() # Ready to load from storage.
-
-  @activateAnotherIfNotEnabled: =>
-      # If currently activated playlist is not part of selection...
-      return if !active # Do not enable if Plugmixer is inactive.
-      activated = playlists.filter(Playlist.isActivated)[0]
-      @activateRandomPlaylist() if !activated.enabled
-
-  @activateRandomPlaylist: =>
-    playlist = @getRandomPlaylist()
-    if playlist? then playlist.activate()
-
-  @numPlaylistsEnabled: =>
-    return playlists.filter(Playlist.isEnabled).length
-
-  @showIcon: =>
-    if !!active # Active
-      chrome.runtime.sendMessage('plugmixer_make_active')
-    else # Inactive
-      chrome.runtime.sendMessage('plugmixer_make_inactive')
-
-  @toggleStatus: =>
-    active = if !!active then 0 else 1
-    @savePlaylists() # Also saves status.
-    @showIcon()
-
-  @getEnabledPlaylists: =>
-    return $.makeArray(playlists.filter(Playlist.isEnabled)).map (playlist) =>
-      playlist.name
-
-  @getEnabledPlaylistsUnshift: (value) =>
-    enabledPlaylists = @getEnabledPlaylists()
-    enabledPlaylists.unshift value
-    return enabledPlaylists
-
-  @chooseSelection: (selectionId) =>
-    chrome.storage.sync.get selectionId, (data) =>
-      for playlist in playlists
-        enable = false
-        for enabledPlaylist in data[selectionId]
-          if playlist.name == enabledPlaylist
-            enable = true
-        if enable then playlist.enable() else playlist.disable()
-      @savePlaylists()
-
-      @activateAnotherIfNotEnabled()
-
-  @saveSelection: (name) =>
-    selectionId = Date.now().toString()
-    selection = {}
-    selection[selectionId] = @getEnabledPlaylistsUnshift name
-    chrome.storage.sync.set selection
-
-    # Save selection under user.
-    selections.unshift selectionId
-    @save 'selections', selections
-
-    return selectionId
-
-  @deleteSelection: (selectionId) =>
-    selections.splice(selections.indexOf(selectionId), 1)
-    chrome.storage.sync.remove selectionId
-    @save 'selections', selections
-
-  @getRandomPlaylist: =>
-    countSum = 0
-    for playlist in playlists.filter Playlist.isEnabled
-      countSum += playlist.count()
-    playlistCount = playlists.length
-    weightedSelect = Math.floor(Math.random() * countSum)
-    for playlist in playlists.filter Playlist.isEnabled
-      if weightedSelect < playlist.count()
-        return playlist
-      weightedSelect -= playlist.count()
-    null
-
-  @getRoomId: =>
-    id = window.location.pathname
-    return id.substring 1, id.length
-
-  @isCurrentRoomFavorite: =>
-    $(ROOM_BAR_FAVORITE).hasClass 'selected'
-
-  @saveRoomPlaylist: (name) =>
-    roomPlaylists = {}
-    roomPlaylists[userId + '_' + name] = @getEnabledPlaylistsUnshift active
-    chrome.storage.sync.set roomPlaylists
-
-  @updateFavorites: (callback) =>
-    if @isCurrentRoomFavorite()
-
-      if favorites.indexOf(@getRoomId()) == -1 # Not listed as favorite.
-        favorites.push @getRoomId()
-        @save 'favorites', favorites
-        callback lastPlayedIn, true # Loads lastPlayedIn then save, or saves roomId.
-
-      else callback @getRoomId(), false # Loads or saves roomId.
-
-    else # Not a favorite...
-
-      if favorites.indexOf(@getRoomId()) > -1 # But listed as favorite.
-        favorites.splice favorites.indexOf(@getRoomId()), 1
-        @save 'favorites', favorites
-        chrome.storage.sync.remove userId + '_' + @getRoomId()
-
-      callback lastPlayedIn, false # Loads lastPlayedIn or saves default.
-
-  @savePlaylists: =>
-    if @isCurrentRoomFavorite()
-      lastPlayedIn = @getRoomId()
-    else
-      lastPlayedIn = 'default'
-    @updateFavorites (roomId) =>
-      @saveRoomPlaylist roomId
-      @save 'lastPlayedIn', roomId
-
-  @loadPlaylists: (location, toSave) =>
-    identifier = userId + '_' + location
-    chrome.storage.sync.get identifier, (data) =>
-      active = data[identifier].splice(0, 1)[0] # Retrieves Plugmixer status.
-      for playlist in playlists
-        enable = false
-        for enabledPlaylist in data[identifier] # Remaining data are enabled playlists.
-          if playlist.name == enabledPlaylist
-            enable = true
-        if enable then playlist.enable() else playlist.disable()
-
-      @savePlaylists() if toSave
-      @showIcon() # Activity determined after load.
-
-      @activateAnotherIfNotEnabled()
-
-  @load: =>
-    chrome.storage.sync.get userId, (data) =>
-      if data[userId]?
-        userData = data[userId]
-
-        if userData.selections?
-          selections = userData.selections
-        if userData.lastPlayedIn?
-          lastPlayedIn = userData.lastPlayedIn
-        if userData.favorites?
-          favorites = userData.favorites
-        @updateFavorites (roomId, toSave) =>
-          @loadPlaylists roomId, toSave
-
-      # New user.       
-      else 
-        @showIcon()
-        for playlist in playlists
-          playlist.enable()
+      when 'remove'
+        switch data.type
+          when 'selection' then removeSelection data.id
 
 
-  @save: (key, value) =>
-    userData[key] = value
-    data = {}
-    data[userId] = userData
-    chrome.storage.sync.set data
+  ###
+  # Window message sender.
+  ###
+  respond = (type, data) ->
+    jsonString = JSON.stringify
+      plugmixer: 'response'
+      type: type
+      response: data
+    window.postMessage jsonString, '*'
 
-  class Playlist
-    constructor: (@dom) ->
-      @name = @dom.children(PLAYLIST_SPAN_NAME).text()
-      @enabled = false
+  ###
+  # Saves key-value to local storage.
+  ###
+  save = (key, value, callback) ->
+    fullKey = PREFIX + userId + '_' + key
+    object = {}
+    object[fullKey] = value
+    chrome.storage.sync.set object, ->
+      if callback? then callback()
 
-      @applyTrigger()
+  ###
+  # Loads key from local storage.
+  ###
+  load = (key, callback) ->
+    fullKey = PREFIX + userId + '_' + key
+    chrome.storage.sync.get fullKey, (items) ->
+      callback items[fullKey]
 
-    count: ->
-      return parseInt(@dom.children(PLAYLIST_SPAN_COUNT).text())
+  ###
+  # Removes key from local storage.
+  ###
+  remove = (key, callback) ->
+    fullKey = PREFIX + userId + '_' + key
+    chrome.storage.sync.remove fullKey, ->
+      if callback? then callback()
 
-    disable: ->
-      @enabled = false
-      @dom.fadeTo(FADE_DURATION, FADE_OPACITY)
 
-    enable: ->
-      @enabled = true
-      @dom.fadeTo(FADE_DURATION, 1)
+  ###
+  # Loads the user data associated with 'id'.
+  # Creates and returns new user data if does not exist.
+  # * Should only run once.
+  ###
+  loadUser = (id) ->
+    userId = id # Sets userId for this session.
 
-    toggle: ->
-      if @enabled
-        @disable()
-        if @isCurrentlyActivated()
-          Plugmixer.activateRandomPlaylist()
-      else
-        @enable()
-        @activate() if Plugmixer.numPlaylistsEnabled() == 1
-      Plugmixer.savePlaylists()
+    load '', (user) ->
+      # Saves if user is new.
+      if !user?
+        saveUser '', # Does not require id key for user.
+          favorites: []
+          lastPlayedIn: 'default'
+          selections: []
+        , ->
+          load '', (user_) -> # Gets the new user.
+            respond 'user', user_
 
-    @isEnabled = (index) ->
-      # this refers to filtered objects.
-      return this.enabled
+      else respond 'user', user
 
-    @isActivated = (index) ->
-      # this refers to filtered objects.
-      return this.isCurrentlyActivated()
+  ###
+  # Saves user associated with 'id' with the following attributes:
+  #   [favorites], "lastPlayedIn", [selections]
+  ###
+  saveUser = (id, data) ->
+    save '', # Does not require id key for user.
+      favorites: data.favorites
+      lastPlayedIn: data.lastPlayedIn
+      selections: data.selections
 
-    isCurrentlyActivated: ->
-      return @dom.children(ACTIVATE_BUTTON).children('i.icon').eq(0).hasClass PLAYLIST_CLASS_SELECTED
 
-    applyTrigger: ->
-      @dom.children(PLAYLIST_SPAN_COUNT).click (event) =>
-        @toggle()
+  ###
+  # Loads the room associated with 'roomKey'.
+  ###
+  loadRoom = (roomKey) ->
+    load roomKey, (room) ->
+      if !room? # No such roomId...
+        roomKey = roomKey.replace /_.+/g, '_default' # Replace with _default key.
 
-    clickDom: ->
-      mouseEvent = document.createEvent 'MouseEvents'
-      mouseEvent.initMouseEvent 'mouseup', true, true, window,
-        1, 0, 0, 0, 0, false, false, false, false, 0, null
-      @dom[0].dispatchEvent(mouseEvent)
+      load roomKey, (room_) ->
+        respond 'room', room_
 
-    activate: ->
-      @clickDom()
-      $(ACTIVATE_BUTTON).eq(0).click() # Clicks one button, works for all playlists.
-      window.postMessage
-        about: 'plugmixer_send_chat',
-        message: 'Next playing from ' + @name + '.'
-        , '*'
+  ###
+  # Saves room of key 'roomKey' with the following attributes:
+  #   [active, "enabledPlaylists"...]
+  ###
+  saveRoom = (roomKey, data) ->
+    save roomKey, data
+
+
+  ###
+  # Loads the selections of user 'id'.
+  # User should have already been loaded before.
+  ###
+  loadSelections = (id) ->
+    load '', (user) ->
+      userData = user
+
+      timestamps = userData.selections
+      timestamps = timestamps.map (timestamp) ->
+        return PREFIX + userId + '_' + timestamp
+      chrome.storage.sync.get timestamps, (selections) ->
+        respond 'selections', selections          
+
+  ###
+  # Saves selection of id 'timestamp' with the following attributes:
+  #   [name, "enabledPlaylists"...]
+  ###
+  saveSelection = (timestamp, data) ->
+    save timestamp, data
+
+  ###
+  # Removes selection of id 'timestamp'.
+  ###
+  removeSelection = (timestamp) ->
+    remove timestamp
+
+
+  console.log 'plugmixer_local.js loaded'
