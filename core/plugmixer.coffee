@@ -351,6 +351,7 @@ class Plugmixer
       $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
 
     collapseNewSelection = ->
+      $(NEW_SELECTION_INPUT).blur()
       $(NEW_SELECTION_LI).addClass HIDE_CLASS
       $(SAVE_NEW_BUTTON).prop 'disabled', false
     expandNewSelection = ->
@@ -440,6 +441,7 @@ class Plugmixer
 
     @use: (timestamp) ->
       Playlists.update @get(timestamp).playlists
+      Room.save()
 
     @delete: (timestamp) ->
       delete @list[timestamp]
