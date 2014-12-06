@@ -20,6 +20,7 @@ class Plugmixer
     console.log 'Plugmixer.initialize'
     Listener.initializeWindowMessage()
     User.initialize()
+    Listener.initializeAPI()
 
 
   ###
@@ -40,6 +41,8 @@ class Plugmixer
       @selections = response.selections || @selections
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
 
+      Selections.initialize()
+
     @save: ->
       data = {}
       data.favorites = @favorites
@@ -52,19 +55,15 @@ class Plugmixer
   # Room management.
   ###
   class Room
+    ROOM_FAVORITE_DIV = '#room-bar .favorite'
+
     @id: null
     @active: 1
 
     @initialize: ->
       @id = API.getRoom().id
       Playlists.initialize()
-      Storage.load 'room', @id
-
-    getStatus = =>
-      status = Playlists.getEnabled().map (playlist) ->
-        return playlist.name
-      status.unshift @active
-      return status
+      Storage.load 'room', idToUse(User.lastPlayedIn)
 
     @update: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
@@ -74,15 +73,49 @@ class Plugmixer
         @active = response.splice(0, 1)[0]
         Playlists.update response # Remainder of response contains playlist data.
 
-      Listener.initializeAPI()
-      Selections.initialize()
+    getStatus = =>
+      status = Playlists.getEnabled().map (playlist) ->
+        return playlist.name
+      status.unshift @active
+      return status
+
+    isFavoriteRoom = =>
+      if $(ROOM_FAVORITE_DIV).hasClass 'selected'
+        if User.favorites.indexOf(@id) < 0 # If not favorited,
+          User.lastPlayedIn = @id # Update lastPlayedIn,
+          User.favorites.unshift @id # Add to favorites,
+          User.save()
+        else if User.lastPlayedIn != @id # Already favorited, but different lastPlayedIn,
+          User.lastPlayedIn = @id # Update lastPlayedIn,
+          User.save()
+        return true
+
+      else # Not selected...
+        if User.favorites.indexOf(@id) > -1 # If already favorited,
+          User.lastPlayedIn = 'default' # Update lastPlayedIn,
+          User.favorites.splice User.favorites.indexOf(@id), 1 # Remove from favorites,
+          User.save()
+          Storage.remove 'room', @id
+        else if User.lastPlayedIn != 'default' # Not favorited, but different lastPlayedIn,
+          User.lastPlayedIn = 'default' # Update lastPlayedIn,
+          User.save()
+        return false
+
+    idToUse = (roomId) =>
+      if isFavoriteRoom() then return @id
+      else if roomId? then roomId else 'default'
 
     @save: ->
-      Storage.save 'room', @id, getStatus()
+      Storage.save 'room', idToUse(), getStatus()
 
     @toggleActive: ->
       @active = if @active == 1 then 0 else 1
       @save()
+
+    @changedTo: (newRoom) ->
+      @id = newRoom.id
+      Storage.load 'room', idToUse(User.lastPlayedIn)
+
 
 
   ###
@@ -119,6 +152,9 @@ class Plugmixer
         Helper.TitleText.update()
         if data.dj? and data.dj.username == API.getUser().username
           Playlists.activateRandom()
+
+      API.on API.ROOM_CHANGE, (oldRoom, newRoom) ->
+        Room.changedTo newRoom
 
 
   ###

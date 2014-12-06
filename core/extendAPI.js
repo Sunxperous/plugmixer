@@ -9,13 +9,9 @@ function extendAPI() {
   // ===
   // Returns the current community object.
   API.getCommunity = function() {
+    var room = {}
 
-    // Returns empty object if not in a community.
-    if (! $('#room').is(':visible')) {
-      return {};
-    }
-
-    var path = function() {
+    room.path = function() {
       var pathname = window.location.pathname;
       // If path ends with '/', strip it.
       if (pathname.charAt(pathname.length - 1) === '/') {
@@ -24,24 +20,24 @@ function extendAPI() {
       return pathname;
     }();
 
-    var id = path.slice(1); // Strips the front '/'.
+    room.id = room.path.slice(1); // Strips the front '/'.
 
-    var name = $('#room-name .bar-value').text();
+    if (room.path === '/dashboard' || room.path === '/') {
+      room.isRoom = false;
+      return room;
+    }
 
-    var description = $('#room-info .description .value').text();
+    room.isRoom = true;
 
-    var welcomeMessage = $('#room-info .welcome .value').text();
+    room.name = $('#room-name .bar-value').text();
 
-    var hostName = $('#room-host .username').text();
+    room.description = $('#room-info .description .value').text();
 
-    return {
-      path: path,
-      id: id,
-      name: name, 
-      description: description,
-      welcomeMessage: welcomeMessage,
-      hostName: hostName,
-    };
+    room.welcomeMessage = $('#room-info .welcome .value').text();
+
+    room.hostName = $('#room-host .username').text();
+
+    return room;
 
   };
 
@@ -52,6 +48,56 @@ function extendAPI() {
   API.getRoom = API.getCommunity;
 
   // ===
+  // API.COMMUNITY_CHANGE
+  // API.ROOM_CHANGE (alias)
+  // ===
+  // API event constant.
+  // This is called when the user changes communities.
+  // It passes the information of the old and new communities.
+  // Usage:
+  //   API.on(API.COMMUNITY_CHANGE, callback);
+  //   function callback(oldCommunity, newCommunity) { ... }
+  API.COMMUNITY_CHANGE = 'roomChange'
+
+  API.ROOM_CHANGE = 'roomChange'
+
+  var oldRoom;
+
+  var ensureRoomInformation = function(callback) {
+    return function() {
+      var room = API.getRoom();
+
+      if (room.isRoom && (room.hostName.length === 0
+        || room.hostName === '(waiting for host to login)')) {
+        
+        setTimeout(ensureRoomInformation(callback), 128); 
+
+      }
+
+      else if (typeof(callback) === 'function') { callback(room); }      
+    }
+  }
+  ensureRoomInformation(function(room) {
+    oldRoom = room;
+  })();
+
+  $(document).click(function(event) {
+
+    if (window.location.pathname != oldRoom.path || typeof oldRoom.path === 'undefined') {
+      var newRoom = API.getRoom();
+
+      ensureRoomInformation(function(room) {
+        newRoom = room;
+
+        API.trigger(API.ROOM_CHANGE, oldRoom, newRoom);
+
+        oldRoom = newRoom;
+      })();
+    }
+  });
+
+
+  // ===
   // API.getPlaylists()
   // ===
   // Returns an Array of the user's playlists.
@@ -60,6 +106,7 @@ function extendAPI() {
     var playlistsDom = $('#playlist-menu div.row');
 
     var playlists = $.makeArray(playlistsDom.map(function(index, playlistDom) { // jQuery map.
+
       var playlistJq = $(playlistDom);
 
       var name = playlistJq.children('span.name').text();

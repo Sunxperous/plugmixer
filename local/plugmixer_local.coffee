@@ -36,6 +36,7 @@ class PlugmixerLocal
 
       when 'remove'
         switch data.type
+          when 'room' then removeRoom data.id
           when 'selection' then removeSelection data.id
 
 
@@ -116,6 +117,12 @@ class PlugmixerLocal
   ###
   saveRoom = (roomKey, data) ->
     save roomKey, JSON.stringify data
+
+  ###
+  # Removes room of key 'roomKey'.
+  ###
+  removeRoom = (roomKey) ->
+    remove roomKey
 
 
   ###
