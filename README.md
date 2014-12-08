@@ -1,33 +1,44 @@
 # ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/images/icon48.png) Plugmixer
 
-#### Overcome the 200 item count limit in plug.dj playlists with this script!
+## Playlist management for plug.dj!
 
-This plug.dj script/extension allows you to play music from two or more of your playlists without having to activate them manually. Each time you DJ, one playlist will be activated randomly for your next turn.
+To start using Plugmixer, visit [plugmixer.sunwj.com](http://plugmixer.sunwj.com).
 
-[![](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm)
+## Setup
 
-## Bookmark script
+Plugmixer uses the following npm modules:
 
-### Activating the script
+1. [coffee-script](https://github.com/jashkenas/coffeescript) for compilation of CoffeeScript,
+1. [uglify-js](https://github.com/mishoo/UglifyJS2) to compress and minify JavaScript, and
+1. [http-server](https://github.com/nodeapps/http-server) for development.
 
-Copy and save the following as a bookmark:
+The CoffeeScript files to be compiled and JavaScript files to be compressed are defined in `build.sh`.
 
-    javascript:(function(){$.getScript('https://dl.dropboxusercontent.com/u/10543516/plugmixer.js');}());
-    
-Click the bookmark when you are in plug.dj, and an indicator should show near the bottom right corner of the screen.
+Use `http-server -S` to serve files over HTTPS.
 
-### Disabling playlists
+## Extended plug.dj API
 
-Click on a playlist's __item count__ in the playlist menu to disable it. Disabled playlists are faded, and will not be activated by Plugmixer.
+The [script `core/extendAPI.js`](core/extendAPI.js) for extending the current plug.dj API is currently hosted [here](https://561967430f325bd7b958c5fc08fd709b26297f3f-www.googledrive.com/host/0ByHWCSTdXEMLU20yR1RkTDRYZFk/).
 
-Clicking on the __item count__ again enables the playlist.
+### Extended API constants and methods
 
-Note that playlist states are _not persistent_ across __bookmarked script__ loads. All playlists will be re-enabled on each script load, and as such, also on each plug.dj refresh.
+#### API.getCommunity() / API.getRoom()
+Returns the community object, with the following properties:
+`path`, `id`, and `isRoom`.
 
-Playlist states are _persistent_ on the Chrome extension.
+If the current path is `/dashboard` or `/`, then `isRoom` is false.
+Else, the object also contains the following properties:
+`name`, `description`, `welcomeMessage`, and `hostName`.
 
-### Deactivating Plugmixer
+#### API.COMMUNITY_CHANGE / API.ROOM_CHANGE
+API event constant. This is called when the user changes communities.
+It passes the information of the old and new communities to the callback.
 
-Click on the __Active__ button on the Plugmixer indicator to deactivate Plugmixer.
+```
+API.on(API.COMMUNITY_CHANGE, callback);
+function callback(oldCommunity, newCommunity) { ... }
+```
 
-[1]: http://google.com
+#### API.getPlaylists()
+Returns an array of the user's playlists, each with the following properties:
+`name`, `itemCount`, `active` and `$`.
