@@ -3,7 +3,7 @@
 
 'use strict'
 
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -159,6 +159,8 @@ class Plugmixer
       API.on API.ROOM_CHANGE, (oldRoom, newRoom) ->
         Room.changedTo newRoom
 
+      Helper.PlaylistRefresh.initialize()
+
 
   ###
   # Miscellaneous features.
@@ -168,6 +170,11 @@ class Plugmixer
       TITLE_TEXT = '#now-playing-media .bar-value'
       @update: ->
         $(TITLE_TEXT).attr 'title', $(TITLE_TEXT).text() # Hover text.
+
+    @PlaylistRefresh: class PlaylistRefresh
+      @initialize: ->
+        $(document).on 'click', '#footer',  (event) ->
+          Playlists.refreshIfRequired()
 
 
   ###
@@ -218,7 +225,19 @@ class Plugmixer
         return playlist.isActive()
       )[0]
 
+    @refreshIfRequired = ->
+      refresh = false
+      for playlist in playlists
+        # Refresh if any of the playlists no longer have a dom parent.
+        if playlist.dom.parent().length == 0 then refresh = true
+
+      if refresh
+        playlistNames = @getEnabled().map (playlist) -> return playlist.name
+        @initialize()
+        @update(playlistNames)
+
     @update: (playlistNames) ->
+      @refreshIfRequired()
       playlists.forEach (playlist) ->
         enable = false
         for playlistName in playlistNames
@@ -234,11 +253,12 @@ class Plugmixer
 
     @activateRandom: ->
       return if Room.active != 1 # Do nothing if not active.
-      playlist = @getRandom()
+      @refreshIfRequired()
+      playlist = getRandom()
       activePlaylist = playlist
       if playlist? then playlist.activate()
 
-    @getRandom = ->
+    getRandom = =>
       countSum = 0
       activePlaylists = @getEnabled()
       for playlist in activePlaylists
