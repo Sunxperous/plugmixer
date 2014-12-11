@@ -4,6 +4,7 @@
 'use strict'
 
 VERSION = "2.0.2"
+HTML_VERSION = "2.0.2"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -336,7 +337,7 @@ class Plugmixer
   # Interface.
   ###
   class Interface
-    DIV_HTML_SRC        = PLUGMIXER_HTML + '?nocache=' + Date.now()
+    DIV_HTML_SRC        = PLUGMIXER_HTML + '?v=' + HTML_VERSION
 
     PARENT_DIV          = '#room'
     MAIN_DIV            = '#plugmixer'
