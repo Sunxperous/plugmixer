@@ -22,8 +22,9 @@ class Plugmixer
     User.initialize()
     Listener.initializeAPI()
 
-    `ga('create', 'UA-51104720-1', 'auto', {'name': 'plugmixer' });`
-    `ga('plugmixer.send', 'pageview');`
+    if TRACKING_CODE?
+      `ga('create', TRACKING_CODE, 'auto', {'name': 'plugmixer' });`
+      `ga('plugmixer.send', 'pageview');`
 
 
   ###
@@ -520,9 +521,10 @@ console.log 'plugmixer.js loaded'
 Plugmixer.start()
 
 # Google Analytics
-`
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-`
+if TRACKING_CODE?
+  `
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  `
