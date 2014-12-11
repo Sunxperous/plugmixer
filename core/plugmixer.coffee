@@ -3,7 +3,7 @@
 
 'use strict'
 
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -336,8 +336,6 @@ class Plugmixer
   # Interface.
   ###
   class Interface
-    LOGO_COLORED_SRC    = 'https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/'
-    LOGO_BW_SRC         = 'https://ae42a52fb891c966c878b145a63b7b2554d0db22-www.googledrive.com/host/0ByHWCSTdXEMLT09iUmtybnI3QXM/' # Black and white.
     DIV_HTML_SRC        = PLUGMIXER_HTML + '?nocache=' + Date.now()
 
     PARENT_DIV          = '#room'
@@ -459,11 +457,11 @@ class Plugmixer
 
     updateStatus = ->
       if Room.active
-        $(BAR_LOGO).attr 'src', LOGO_COLORED_SRC
+        $(BAR_LOGO).removeClass 'plugmixer-desaturate'
         $(STATUS_INACTIVE_DIV).removeClass 'show'
         $(STATUS_ACTIVE_DIV).addClass 'show'
       else
-        $(BAR_LOGO).attr 'src', LOGO_BW_SRC
+        $(BAR_LOGO).addClass 'plugmixer-desaturate'
         $(STATUS_ACTIVE_DIV).removeClass 'show'
         $(STATUS_INACTIVE_DIV).addClass 'show'
 

@@ -56,6 +56,14 @@
       display: inline-block;
       vertical-align: top;
       cursor: pointer;
+      transition: all 0.25s ease-out;
+    }
+    #plugmixer-logo.plugmixer-desaturate {
+      -webkit-filter: grayscale(100%);
+      -moz-filter:    grayscale(100%);
+      -ms-filter:     grayscale(100%);
+      -o-filter:      grayscale(100%);
+      filter:         grayscale(100%); 
     }
 
     #plugmixer-title {
@@ -222,11 +230,11 @@
       word-wrap: break-word;
     }
     .plugmixer-selection:hover {
-      background-color: rgba(147, 171, 50, 0.85);
+      background-color: rgba(147, 171, 50, 0.75);
     }
     .plugmixer-selection.plugmixer-in-use {
       color: #fff;
-      background-color: rgba(177, 201, 80, 0.85);
+      background-color: rgba(177, 201, 80, 0.75);
     }
     .plugmixer-selection.plugmixer-hide { /* Removed selection. */
       max-height: 0;
@@ -241,7 +249,7 @@
     }
     #plugmixer-new-selection {
       max-height: 314px;
-      background-color: #ad87dc;
+      background-color: #9d77cc;
     }
 
     #plugmixer-selection-sample {
@@ -324,7 +332,7 @@
 
   </style>
   <div id="plugmixer-bar">
-    <img id="plugmixer-logo" style="display: inline-block;">
+    <img id="plugmixer-logo" src="https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/">
     <div id="plugmixer-bar-text">
       <span id="plugmixer-title">plugmixer</span>
       <div id="plugmixer-status">
