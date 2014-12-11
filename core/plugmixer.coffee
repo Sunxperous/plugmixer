@@ -176,6 +176,8 @@ class Plugmixer
       @initialize: ->
         $(document).on 'click', '#footer',  (event) ->
           Playlists.refreshIfRequired()
+          Interface.update()
+          Interface.updateSelections()
 
 
   ###
@@ -336,7 +338,7 @@ class Plugmixer
   class Interface
     LOGO_COLORED_SRC    = 'https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/'
     LOGO_BW_SRC         = 'https://ae42a52fb891c966c878b145a63b7b2554d0db22-www.googledrive.com/host/0ByHWCSTdXEMLT09iUmtybnI3QXM/' # Black and white.
-    DIV_HTML_SRC        = PLUGMIXER_HTML
+    DIV_HTML_SRC        = PLUGMIXER_HTML + '?nocache=' + Date.now()
 
     PARENT_DIV          = '#room'
     MAIN_DIV            = '#plugmixer'
@@ -358,6 +360,7 @@ class Plugmixer
     NEW_SELECTION_LI    = '#plugmixer-new-selection'
     SAVE_NEW_BUTTON     = '#plugmixer-save-new'
     NEW_SELECTION_INPUT = '#plugmixer-input'
+    SCROLL_OFFSET       = 40
 
     @initialize: ->
       # Retrieves the html.
@@ -372,9 +375,7 @@ class Plugmixer
           if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
             @update()
-          else expandInterface()
-
-        $(MAIN_DIV).mouseleave (event) -> collapseInterface()
+          else toggleInterface()
 
         $(SAVE_NEW_BUTTON).click (event) -> expandNewSelection()
         $('#plugmixer-selection-cancel').click (event) -> collapseNewSelection()
@@ -397,17 +398,18 @@ class Plugmixer
           $(activePlaylists).not(selection.playlists).length == 0
         if same then $(this).addClass IN_USE_CLASS else $(this).removeClass IN_USE_CLASS
 
-    collapseInterface = ->
-      $(EXPANDED_DIV).addClass HIDE_CLASS
-      $(DROPDOWN_ARROW_DIV).removeClass ROTATE_CLASS
-      $(NEW_SELECTION_LI).addClass HIDE_CLASS
-      $(SAVE_NEW_BUTTON).prop 'disabled', false
-      collapseNewSelection()
-    expandInterface = =>
+    toggleInterface = =>
       @update()
       @updateSelections()
       $(EXPANDED_DIV).toggleClass HIDE_CLASS
       $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
+      $(MAIN_DIV).toggleClass 'plugmixer-hover'
+      if $('.' + IN_USE_CLASS).length > 0
+        $(SELECTIONS_UL).scrollTop $('.' + IN_USE_CLASS).position().top - SCROLL_OFFSET
+      if $(NEW_SELECTION_LI).is(':visible')
+        $(NEW_SELECTION_LI).addClass HIDE_CLASS
+        $(SAVE_NEW_BUTTON).prop 'disabled', false
+        collapseNewSelection()
 
     collapseNewSelection = ->
       $(NEW_SELECTION_INPUT).blur()
