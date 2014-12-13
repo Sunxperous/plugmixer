@@ -163,6 +163,9 @@ class Plugmixer
 
       Helper.PlaylistRefresh.initialize()
 
+      API.on API.PLAYLIST_ACTIVATE, (playlist) ->
+        API.chatLog "Next playing from #{playlist.name}"
+
 
   ###
   # Miscellaneous features.
@@ -316,16 +319,8 @@ class Plugmixer
             Playlists.activateRandom()
         Room.save()
 
-      clickDom: ->
-        mouseEvent = document.createEvent 'MouseEvents'
-        mouseEvent.initMouseEvent 'mouseup', true, true, window,
-          1, 0, 0, 0, 0, false, false, false, false, 0, null
-        @dom[0].dispatchEvent(mouseEvent)
-
       activate: ->
-        @clickDom()
-        $(ACTIVATE_BUTTON).eq(0).click()
-        API.chatLog "Next playing from #{@name}"
+        API.activatePlaylist @dom
 
       isActivating: ->
         return @dom.children(SPINNER).length > 0
