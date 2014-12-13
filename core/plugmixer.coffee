@@ -76,7 +76,8 @@ class Plugmixer
         @save()
       else # Existing room...
         @active = response.splice(0, 1)[0]
-        Playlists.update response # Remainder of response contains playlist data.
+        Playlists.afterInitialization ->
+          Playlists.update response # Remainder of response contains playlist data.
 
     getStatus = =>
       status = Playlists.getEnabled().map (playlist) ->
@@ -217,22 +218,32 @@ class Plugmixer
   class Playlists
     playlists = []
     activePlaylist = null
+    queue = []
+    initialized = false
 
     @initialize: ->
-      playlists = API.getPlaylists().map (playlist) ->
-        return new Playlist(playlist)
-      activePlaylist = @getActivated()
+      API.getPlaylists (_playlists) =>
+        playlists = _playlists.map (playlist) ->
+          return new Playlist(playlist)
 
-    @getEnabled = ->
+        activePlaylist = @getActivated()
+        initialized = true
+        queue.forEach (callback) -> callback()
+
+    @afterInitialization: (callback) ->
+      if initialized then callback()
+      else queue.push callback
+
+    @getEnabled: ->
       return playlists.filter (playlist, index) ->
         return playlist.enabled
 
-    @getActivated = ->
+    @getActivated: ->
       return (playlists.filter (playlist, index) ->
         return playlist.isActive()
       )[0]
 
-    @refreshIfRequired = ->
+    @refreshIfRequired: ->
       refresh = false
       for playlist in playlists
         # Refresh if any of the playlists no longer have a dom parent.
@@ -240,7 +251,14 @@ class Plugmixer
 
       if refresh
         playlistNames = @getEnabled().map (playlist) -> return playlist.name
-        @initialize()
+        refreshPlaylists(playlistNames)
+
+    refreshPlaylists = (playlistNames) =>
+      API.getPlaylists (_playlists) ->
+        playlists = _playlists.map (playlist) ->
+          return new Playlist(playlist)
+        
+        activePlaylist = @getActivated()
         @update(playlistNames)
 
     @update: (playlistNames) ->
@@ -292,6 +310,7 @@ class Plugmixer
         @dom = playlist.$
         @name = playlist.name
         @enabled = true
+        @id = playlist.id
 
         @dom.children(SPAN_COUNT).mouseup (event) => # Mouseup to prevent parent triggers.
           @toggle()

@@ -71,7 +71,7 @@ var VERSION = 'v2.0.2';
         setTimeout(onRoomChange(callback), 128);
       }
 
-      else if (typeof(callback) === 'function') { callback(room); }      
+      else if (typeof(callback) === 'function') { callback(room); }
     }
   };
 
@@ -94,33 +94,64 @@ var VERSION = 'v2.0.2';
 
 
   // ===
-  // API.getPlaylists()
+  // API.getPlaylists(callback [optional])
   // ===
   // Returns an Array of the user's playlists.
-  API.getPlaylists = function() {
+  // Pass in a callback to retrieve an Array of the user's playlists, with id.
+  // Usage:
+  //   API.getPlaylists(callback);
+  //   function callback(playlistsWithId) { ... }
+  API.getPlaylists = function(callback) {
 
-    var playlistsDom = $('#playlist-menu div.row');
+    if (typeof(callback) !== 'function') { return getPlaylistsFromDom(); }
 
-    var playlists = $.makeArray(playlistsDom.map(function(index, playlistDom) { // jQuery map.
+    $.get('/_/playlists', function(response) {
 
-      var playlist = {};
+      var playlistsWithId = response.data;
 
-      playlist.$ = $(playlistDom);
+      var playlists = getPlaylistsFromDom().map(function(playlist) {
+        var indexToSplice;
+        playlistsWithId.some(function(playlistWithId, index) {
+          if (playlistWithId.name === playlist.name && playlistWithId.count === playlist.itemCount) {
+            indexToSplice = index;
+            return true;
+          }
+        });
 
-      playlist.name = playlist.$.children('span.name').text();
+        var splicedPlaylist = playlistsWithId.splice(indexToSplice, 1)[0];
 
-      playlist.itemCount = parseInt(playlist.$.children('span.count').text());
+        playlist.id = splicedPlaylist.id;
+        playlist.count = splicedPlaylist.count;
 
-      playlist.active = playlist.$.children('.activate-button')
-        .children('i.icon').eq(0).hasClass('icon-check-purple');
+        return playlist;
+      });
 
-      return playlist;
+      callback(playlists);
 
-    }));
-
-    return playlists;
+    });
 
   };
+
+  function getPlaylistsFromDom() {
+    return $.makeArray(
+      $('#playlist-menu div.row').map(function(index, playlistDom) { // jQuery map.
+
+        var playlist = {};
+
+        playlist.$ = $(playlistDom);
+
+        playlist.name = playlist.$.children('span.name').text();
+
+        playlist.itemCount = parseInt(playlist.$.children('span.count').text());
+
+        playlist.active = playlist.$.children('.activate-button')
+          .children('i.icon').eq(0).hasClass('icon-check-purple');
+
+        return playlist;
+
+      })
+    );
+  }
 
 
   // ===
@@ -128,7 +159,7 @@ var VERSION = 'v2.0.2';
   // ===
   // Returns the playlist that is currently active.
   API.getActivePlaylist = function() {
-    return API.getPlaylists().filter(function(playlist) {
+    return getPlaylistsFromDom().filter(function(playlist) {
       return playlist.active;
     })[0];
   };
@@ -142,7 +173,7 @@ var VERSION = 'v2.0.2';
   // or a string which will activate the first playlist with the same name.
   API.activatePlaylist = function(obj) {
     var jQ = null;
-    var playlists = API.getPlaylists();
+    var playlists = getPlaylistsFromDom();
 
     // Playlist object.
     if (typeof(obj.$) !== 'undefined' && obj.$ !== null && obj.$ instanceof jQuery) {
@@ -177,10 +208,8 @@ var VERSION = 'v2.0.2';
     jQ[0].dispatchEvent(mouseEvent);
 
     // Clicking the activate button.
-    $('.activate-button').eq(0).click(); // Clicks only the first one, works for all playlists.
+    jQ.children('.activate-button').click();
 
-    // Send API.PLAYLIST_ACTIVATE event.
-    onPlaylistActivate(jQ)();
 
   };
 
