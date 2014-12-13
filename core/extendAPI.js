@@ -207,10 +207,7 @@ var VERSION = 'v2.0.2';
       1, 0, 0, 0, 0, false, false, false, false, 0, null);
     jQ[0].dispatchEvent(mouseEvent);
 
-    // Clicking the activate button.
     jQ.children('.activate-button').click();
-
-
   };
 
 
@@ -244,6 +241,22 @@ var VERSION = 'v2.0.2';
   $(document).on('click', '.activate-button', function(event) {
     onPlaylistActivate($(event.currentTarget).parent())();
   });
+
+
+  // ===
+  // API.getPlaylistMedia(id, callback)
+  // ===
+  // Retrieves the media items in a playlist.
+  API.getPlaylistMedia = function(id, callback) {
+    if (typeof(callback) !== 'function') { return; }
+
+    if (typeof(id) !== 'number' && (typeof(id) !== 'string' || id.length > 0)) {
+      return callback([]);
+    }
+    $.get('/_/playlists/' + id + '/media', function(data) {
+      callback(data.data);
+    });
+  };
 
 
   API.extended = true;
