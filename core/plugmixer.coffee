@@ -222,7 +222,11 @@ class Plugmixer
     initialized = false
 
     @initialize: ->
-      API.getPlaylists (_playlists) =>
+      playlists = API.getPlaylists().map (playlist) ->
+        return new Playlist(playlist)
+      activePlaylist = @getActivated()
+
+      API.getPlaylists (_playlists) => # Retrieve id as well.
         playlists = _playlists.map (playlist) ->
           return new Playlist(playlist)
 
