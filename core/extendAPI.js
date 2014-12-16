@@ -1,6 +1,6 @@
 'use strict';
 
-var VERSION = 'v2.0.2';
+var EXTEND_API_VERSION = '2.0.2';
 
 (function extendAPI() {
 

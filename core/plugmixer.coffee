@@ -184,6 +184,72 @@ class Plugmixer
           Interface.update()
           Interface.updateSelections()
 
+    @Effects: class Effects
+      # December 2014: Snow!
+      canvas = context = intervalId = null
+      intervalCount = 0
+      particles = []
+      NO_OF_FRAMES    = 180 # 3s, 60fps.
+      SIZE            = 6
+      MELT_RATE       = SIZE / NO_OF_FRAMES
+      Y_START         = 10
+      Y_ACC           = 4
+      Y_MIN_ACC       = 1
+      X_ACC           = 2
+      X_MIN_ACC       = -1 # Moving left.
+      X_MAX_VELOCITY  = 2
+      X_MIN_VELOCITY  = -2
+      SNOW_MIN_COUNT  = 20
+      SNOW_UPTO_COUNT = 40 - SNOW_MIN_COUNT
+
+      @initialize: ->
+        canvas = document.getElementById 'plugmixer-effects'   
+        return if not canvas.getContext
+        context = canvas.getContext '2d'     
+
+      @reset: ->
+        if canvas? and context?
+          clearInterval intervalId
+          intervalCount = 0
+
+        particles = []
+        for i in [1..Math.random() * SNOW_UPTO_COUNT + SNOW_MIN_COUNT]
+          particle =
+            size: Math.random() * SIZE
+            meltRate: MELT_RATE
+            x: Math.random() * canvas.width
+            xV: Math.random() * X_ACC + X_MIN_ACC
+            y: Y_START
+            yV: Math.random() * Y_ACC + Y_MIN_ACC
+            move: ->
+              @xV = Math.min Math.max(@xV + Math.random() * X_ACC + X_MIN_ACC, X_MIN_VELOCITY), X_MAX_VELOCITY
+              @x = @x + @xV
+              @y = @y + @yV
+              @size = Math.max @size - @meltRate, 0
+          particles.push particle
+
+      @draw: ->
+        return if not context?
+        @reset()
+
+        intervalId = setInterval(@play, 1000 / 60)
+
+      clear = ->
+        context.clearRect 0, 0, canvas.width, canvas.height
+
+      @play: ->
+        clear()
+        if ++intervalCount > NO_OF_FRAMES
+          clearInterval intervalId
+          intervalCount = 0
+        particles.forEach (particle) ->
+          particle.move()
+          context.beginPath()
+          context.arc particle.x, particle.y, particle.size, 2 * Math.PI, false
+          context.fillStyle = 'white'
+          context.fill()
+          context.closePath()
+
 
   ###
   # Window message passer to storage.
@@ -258,7 +324,7 @@ class Plugmixer
         refreshPlaylists(playlistNames)
 
     refreshPlaylists = (playlistNames) =>
-      API.getPlaylists (_playlists) ->
+      API.getPlaylists (_playlists) =>
         playlists = _playlists.map (playlist) ->
           return new Playlist(playlist)
         
@@ -402,6 +468,8 @@ class Plugmixer
 
         $(document).on 'click', LI_SELECTIONS, clickedSelection
 
+        Helper.Effects.initialize()
+
     @update: ->
       updateStatus()
       updateNumber()
@@ -427,6 +495,7 @@ class Plugmixer
         $(NEW_SELECTION_LI).addClass HIDE_CLASS
         $(SAVE_NEW_BUTTON).prop 'disabled', false
         collapseNewSelection()
+      Helper.Effects.draw() if not $(EXPANDED_DIV).hasClass HIDE_CLASS
 
     collapseNewSelection = ->
       $(NEW_SELECTION_INPUT).blur()
