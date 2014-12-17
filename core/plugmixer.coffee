@@ -10,8 +10,12 @@ class Plugmixer
   INITIALIZATION_TIMEOUT = 512
   PLAYLIST_MENU_DIV_ROW  = '#playlist-menu div.row'
 
+  extendedAPI = false
   @start: =>
-    if $? and API? and !API.extended then $.getScript EXTEND_API
+    if $? and API? and !extendedAPI
+      extendedAPI = true
+      $.getScript EXTEND_API
+
     if $? and API? and $(PLAYLIST_MENU_DIV_ROW).length != 0 and API.getUser().id? and API.extended
       initialize()
     else
@@ -25,7 +29,6 @@ class Plugmixer
 
     if TRACKING_CODE?
       `ga('create', TRACKING_CODE, 'auto', {'name': 'plugmixer' });`
-      `ga('plugmixer.send', 'pageview');`
 
 
   ###
@@ -69,6 +72,7 @@ class Plugmixer
       @id = API.getRoom().id
       Playlists.initialize()
       Storage.load 'room', idToUse(User.lastPlayedIn)
+      `ga('plugmixer.send', 'pageview');`
 
     @update: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
@@ -121,6 +125,7 @@ class Plugmixer
     @changedTo: (newRoom) ->
       @id = newRoom.id
       Storage.load 'room', idToUse(User.lastPlayedIn)
+      `ga('plugmixer.send', 'pageview');`
 
 
 
