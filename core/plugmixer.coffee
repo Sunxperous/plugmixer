@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.0.2"
-HTML_VERSION = "2.0.2"
+VERSION = "2.0.3"
+HTML_VERSION = "2.0.3"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -28,7 +28,9 @@ class Plugmixer
     Listener.initializeAPI()
 
     if TRACKING_CODE?
-      `ga('create', TRACKING_CODE, 'auto', {'name': 'plugmixer' });`
+      ga 'create', TRACKING_CODE, 'auto', name: 'plugmixer'
+      ga 'plugmixer.set', 'contentGroup1', 'Plug.dj rooms'
+      ga 'plugmixer.set', 'referrer', ''
 
 
   ###
@@ -72,7 +74,9 @@ class Plugmixer
       @id = API.getRoom().id
       Playlists.initialize()
       Storage.load 'room', idToUse(User.lastPlayedIn)
-      `ga('plugmixer.send', 'pageview');`
+
+      ga 'plugmixer.set', page: API.getRoom().path, title: API.getRoom().name
+      ga 'plugmixer.send', 'pageview'
 
     @update: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
@@ -120,13 +124,15 @@ class Plugmixer
 
     @toggleActive: ->
       @active = if @active == 1 then 0 else 1
+      ga 'plugmixer.send', 'event', 'main', 'click', 'status', @active
       @save()
 
     @changedTo: (newRoom) ->
       @id = newRoom.id
       Storage.load 'room', idToUse(User.lastPlayedIn)
-      `ga('plugmixer.send', 'pageview');`
 
+      ga 'plugmixer.set', page: newRoom.path, title: newRoom.name
+      ga 'plugmixer.send', 'pageview'
 
 
   ###
@@ -404,10 +410,12 @@ class Plugmixer
 
       toggle: ->
         if @enabled
+          ga 'plugmixer.send', 'event', 'playlist', 'click', 'disable'
           @disable()
           if @isActivating() or @isActive() # Only activate another if this playlist is active.
             Playlists.activateAnother(@)
         else
+          ga 'plugmixer.send', 'event', 'playlist', 'click', 'enable'
           @enable()
           if Playlists.getEnabled().length == 1 and !@isActive()
             Playlists.activateRandom()
@@ -500,7 +508,11 @@ class Plugmixer
         $(NEW_SELECTION_LI).addClass HIDE_CLASS
         $(SAVE_NEW_BUTTON).prop 'disabled', false
         collapseNewSelection()
-      Helper.Effects.draw() if not $(EXPANDED_DIV).hasClass HIDE_CLASS
+      if not $(EXPANDED_DIV).hasClass HIDE_CLASS # If expanding...
+        Helper.Effects.draw()
+        ga 'plugmixer.send', 'event', 'main', 'click', 'expand'
+      else
+        ga 'plugmixer.send', 'event', 'main', 'click', 'collapse'
 
     collapseNewSelection = ->
       $(NEW_SELECTION_INPUT).blur()
@@ -515,6 +527,7 @@ class Plugmixer
         .text Playlists.getEnabled().map((p) -> return p.name).join(', ')
 
     addNewSelection = =>
+      ga 'plugmixer.send', 'event', 'group', 'enter'
       selectionObj = Selections.add $(NEW_SELECTION_INPUT).val()
       collapseNewSelection()
       $(NEW_SELECTION_LI).after selectionLi(selectionObj)
@@ -523,9 +536,11 @@ class Plugmixer
     clickedSelection = (event) =>
       timestamp = $(event.currentTarget).data 'timestamp' # Because $(this) is $(document).
       if event.target.className == 'plugmixer-selection-delete'
+        ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
         $(event.currentTarget).addClass HIDE_CLASS
         Selections.delete timestamp
       else
+        ga 'plugmixer.send', 'event', 'group', 'click', 'use'
         Selections.use timestamp
         @updateSelections()
         updateNumber()
@@ -621,3 +636,5 @@ if TRACKING_CODE?
     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
   `
+else
+  window.ga = ->
