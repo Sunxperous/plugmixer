@@ -25,7 +25,6 @@ class Plugmixer
     console.log 'Plugmixer.initialize'
     Listener.initializeWindowMessage()
     User.initialize()
-    Listener.initializeAPI()
 
     if TRACKING_CODE?
       ga 'create', TRACKING_CODE, 'auto', name: 'plugmixer'
@@ -52,6 +51,7 @@ class Plugmixer
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
 
       Selections.initialize()
+      Listener.initializeAPI()
 
     @save: ->
       data = {}
@@ -128,6 +128,7 @@ class Plugmixer
       @save()
 
     @changedTo: (newRoom) ->
+      return if !@id?
       @id = newRoom.id
       Storage.load 'room', idToUse(User.lastPlayedIn)
 
@@ -156,7 +157,6 @@ class Plugmixer
           switch data.type
             when 'user' # Should only happen once.
               User.update data.response
-              Room.initialize()
             when 'room' then Room.update data.response # Should only happen once.
             when 'selections' then Selections.update data.response
 
@@ -177,6 +177,8 @@ class Plugmixer
 
       API.on API.PLAYLIST_ACTIVATE, (playlist) ->
         API.chatLog "Next playing from #{playlist.name}"
+
+      Room.initialize()
 
 
   ###
