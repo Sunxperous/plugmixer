@@ -6,3 +6,4 @@ misc/
 *sublime-workspace
 *.js
 release/*
+*.json

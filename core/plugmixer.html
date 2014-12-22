@@ -30,6 +30,18 @@
       border-color: #fff;
     }
 
+    #plugmixer button {
+      font-size: 11px;
+      padding: 4px 16px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'Open Sans', sans-serif;
+      color: #fff;
+      cursor: pointer;
+      line-height: 20px;
+    }
+
     #plugmixer-bar {
       box-sizing: border-box;
       height: 40px;
@@ -136,10 +148,51 @@
       position: relative;
       height: 100%;
       visibility: visible;
+      perspective: 960px;
     }
     #plugmixer-expanded.plugmixer-hide {
       opacity: 0;
       visibility: hidden;
+    }
+
+    .plugmixer-card {
+      position: absolute;
+      height: 100%;
+      transition: all 0.5s ease-out;
+      visibility: hidden;
+      backface-visibility: hidden;
+      opacity: 0.5;
+      transform-style: preserve-3d;
+      width: 100%;
+      z-index: 15;
+    }
+    @-webkit-keyframes plugmixer-flip-out { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
+       @-moz-keyframes plugmixer-flip-out { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
+         @-o-keyframes plugmixer-flip-out { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
+            @keyframes plugmixer-flip-out { from { transform: rotateY(0deg); } to { transform: rotateY(180deg); } }
+    .plugmixer-flip-out {
+      -webkit-animation: plugmixer-flip-out 0.5s linear 0s;
+         -moz-animation: plugmixer-flip-out 0.5s linear 0s;
+          -ms-animation: plugmixer-flip-out 0.5s linear 0s;
+           -o-animation: plugmixer-flip-out 0.5s linear 0s;
+      visibility: hidden;
+      opacity: 0.5;
+    }
+
+    @-webkit-keyframes plugmixer-flip-in { from { transform: rotateY(-180deg); } to { transform: rotateY(0deg); } }
+       @-moz-keyframes plugmixer-flip-in { from { transform: rotateY(-180deg); } to { transform: rotateY(0deg); } }
+         @-o-keyframes plugmixer-flip-in { from { transform: rotateY(-180deg); } to { transform: rotateY(0deg); } }
+            @keyframes plugmixer-flip-in { from { transform: rotateY(-180deg); } to { transform: rotateY(0deg); } }
+    .plugmixer-flip-in {
+      -webkit-animation: plugmixer-flip-in 0.5s linear 0s;
+         -moz-animation: plugmixer-flip-in 0.5s linear 0s;
+          -ms-animation: plugmixer-flip-in 0.5s linear 0s;
+           -o-animation: plugmixer-flip-in 0.5s linear 0s;
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #plugmixer-main {
     }
 
     #plugmixer-actions {
@@ -150,6 +203,7 @@
       border-top: 2px solid #fff;
       z-index: 16;
       position: relative;
+      width: 100%;
     }
     /* [8px] [ 152 px ] [ 152 px ] [8px] */
 
@@ -188,16 +242,7 @@
       width: 152px;
     }
     #plugmixer-save-new {
-      font-size: 11px;
-      padding: 4px 16px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      font-weight: 600;
-      font-family: 'Open Sans', sans-serif;
-      color: #fff;
-      cursor: pointer;
       background: linear-gradient(to bottom, #c1d960, #6c6);
-      line-height: 20px;
     }
     #plugmixer-save-new:hover {
       background: linear-gradient(to bottom, #b1c950, #6c6);
@@ -252,11 +297,11 @@
       background-color: #9d77cc;
     }
 
-    #plugmixer-selection-sample {
+    #plugmixer-selection-sample, #plugmixer-playlist-sample {
       display: none;
     }
 
-    .plugmixer-selection-name {
+    .plugmixer-selection-name, .plugmixer-playlist-name {
       font-size: 14px;
       font-weight: 800;
     }
@@ -274,7 +319,7 @@
       white-space: normal;
     }
 
-    .plugmixer-selection-actions {
+    .plugmixer-selection-actions, .plugmixer-playlist-actions {
       margin-top: 4px;
       text-transform: uppercase;
       text-align: right;
@@ -335,6 +380,87 @@
       z-index: 14;
     }
 
+    #plugmixer-login {
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0 24px 24px 24px;
+      overflow-y: auto;
+      height: auto;
+      top: 0;
+      bottom: 67px;
+    }
+    .plugmixer-youtube-title {
+      font-size: 1.5em;
+      margin: 24px;
+    }
+    .plugmixer-youtube-warning {
+      color: #ff8888;
+      white-space: pre-line;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .plugmixer-youtube-warning::first-line {
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: 600;
+    }
+    .plugmixer-youtube-understand {
+      line-height: 20px;
+    }
+    #plugmixer-youtube-login {
+      display: block;
+      background-color: #993333;
+      margin: 0 auto;
+    }
+
+    #plugmixer-playlists {
+      color: #eee;
+      overflow: auto;
+      position: absolute;
+      width: 320px;
+      top: 0;
+      bottom: 67px;
+      z-index: 15;
+    }
+
+    .plugmixer-playlist {
+      padding: 12px;
+      font-size: 12px;
+      transition: all 0.3s ease-out;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+    .plugmixer-playlist-syncinfo {      
+      line-height: 16px;
+      max-height: 16px;
+      display: none;
+    }
+    .plugmixer-playlist-synced .plugmixer-playlist-syncinfo {
+      display: block;
+    }
+    .plugmixer-playlist-synced .plugmixer-playlist-syncinfo::before {
+      content: 'Last synced: ';
+    }
+    .plugmixer-playlist:hover {
+      background-color: rgba(96, 64, 160, 0.75);
+    }
+    .plugmixer-playlist.plugmixer-playlist-synced {
+      color: #fff;
+      background-color: rgba(128, 92, 192, 0.75);
+    }
+    .plugmixer-playlist.plugmixer-playlist-syncing {
+      background-color: rgba(138, 102, 202, 0.75);
+    }
+    .plugmixer-playlist-syncing .plugmixer-playlist-syncinfo::before {
+      content: 'Syncing: ';
+    }
+    .plugmixer-playlist-syncing .plugmixer-playlist-syncinfo {
+      display: block;
+    }
+
   </style>
   <div id="plugmixer-bar">
     <img id="plugmixer-logo" src="https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/?v=2.0.2">
@@ -347,35 +473,62 @@
     </div>
     <div id="plugmixer-dropdown-arrow">&#9660;</div>
   </div>
-  <canvas id="plugmixer-effects" width="320" height="400"></canvas>
   <div id="plugmixer-expanded" class="plugmixer-hide">
-    <div id="plugmixer-actions">
-      <div id="plugmixer-info">
-        <div id="plugmixer-number"></div>
-        <div id="plugmixer-number-text">active playlists</div>
+    <canvas id="plugmixer-effects" width="320" height="400"></canvas>
+    <div id="plugmixer-main" class="plugmixer-card plugmixer-flip-in">
+      <div id="plugmixer-actions">
+        <div id="plugmixer-info">
+          <div id="plugmixer-number"></div>
+          <div id="plugmixer-number-text">active playlists</div>
+        </div>
+        <div id="plugmixer-action-button">
+          <button id="plugmixer-save-new">Save new group</button>
+        </div>
       </div>
-      <div id="plugmixer-action-button">
-        <button id="plugmixer-save-new">Save new group</button>
+      <ul id="plugmixer-selections">
+        <div class="plugmixer-selection plugmixer-hide" id="plugmixer-new-selection">
+          <input type="text" id="plugmixer-input" class="plugmixer-selection-name" placeholder="Name of group">
+          <div class="plugmixer-selection-playlists"></div>
+          <div class="plugmixer-selection-actions">
+            <span id="plugmixer-selection-cancel">Cancel</span>
+          </div>
+        </div>
+        <li id="plugmixer-selection-sample">
+          <div class="plugmixer-selection-name"></div>
+          <div class="plugmixer-selection-playlists"></div>
+          <div class="plugmixer-selection-actions">
+            <span class="plugmixer-selection-delete">Delete</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div id="plugmixer-login" class="plugmixer-card plugmixer-flip-out">
+      <div class="plugmixer-youtube-title">YouTube playlists sync</div>
+      <div class="plugmixer-youtube-warning">Warning!
+        By authorizing Plugmixer access to your YouTube/Google+ profile, you are also authorizing other scripts and extensions on plug.dj to do so!
+        Only install and use the scripts and extensions that you trust.
+        Plugmixer is not responsible for any malicious behavior as a result of said authorization.
+
+        Please also note that YouTube playlists sync is a beta feature, thus it is not stable, and is prone to changes.
+      </div>
+      <div class="plugmixer-youtube-understand">I understand the risks,
+        <button id="plugmixer-youtube-login">Sign me in with YouTube/Google+</button>
       </div>
     </div>
-    <ul id="plugmixer-selections">
-      <div class="plugmixer-selection plugmixer-hide" id="plugmixer-new-selection">
-        <input type="text" id="plugmixer-input" class="plugmixer-selection-name" placeholder="Name of group">
-        <div class="plugmixer-selection-playlists"></div>
-        <div class="plugmixer-selection-actions">
-          <span id="plugmixer-selection-cancel">Cancel</span>
-        </div>
-      </div>
-      <li id="plugmixer-selection-sample">
-        <div class="plugmixer-selection-name"></div>
-        <div class="plugmixer-selection-playlists"></div>
-        <div class="plugmixer-selection-actions">
-          <span class="plugmixer-selection-delete">Delete</span>
-        </div>
-      </li>
-    </ul>
+    <div id="plugmixer-sync" class="plugmixer-card plugmixer-flip-out">
+      <ul id="plugmixer-playlists">
+        <li id="plugmixer-playlist-sample">
+          <div class="plugmixer-playlist-name"></div>
+          <div class="plugmixer-playlist-syncinfo"></div>
+          <div class="plugmixer-playlist-actions">
+            <span class="plugmixer-playlist-youtube">Click to sync</span>
+          </div>
+        </li>
+      </ul>
+    </div>
     <div id="plugmixer-about">
-      <a id="plugmixer-link" href="https://plugmixer.sunwj.com/" target="_blank">plugmixer.sunwj.com</a>
+      <a id="plugmixer-try">try youtube sync?</a>
+      <a id="plugmixer-link" href="https://plugmixer.sunwj.com" target="_blank">plugmixer.sunwj.com</a>
       <span id="plugmixer-version"></span>
     </div>
   </div>

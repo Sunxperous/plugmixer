@@ -27,12 +27,14 @@ class PlugmixerLocal
           when 'user' then loadUser data.id
           when 'room' then loadRoom data.id
           when 'selections' then loadSelections data.id
+          when 'playlists' then loadPlaylists data.id
             
       when 'save'
         switch data.type
           when 'user' then saveUser data.id, data.data
           when 'room' then saveRoom data.id, data.data
           when 'selection' then saveSelection data.id, data.data
+          when 'playlists' then savePlaylists data.id, data.data
 
       when 'remove'
         switch data.type
@@ -153,5 +155,19 @@ class PlugmixerLocal
   removeSelection = (timestamp) ->
     remove timestamp
 
+
+  ###
+  # Loads the synced playlists of user 'id'.
+  # User should have already been loaded before.
+  ###
+  loadPlaylists = (id) ->
+    respond 'playlists', JSON.parse load 'playlists'
+
+  ###
+  # Saves the synced playlists with the following attributes:
+  #   [ { plugId: "", ytId: "" }, ... ]
+  ###
+  savePlaylists = (id, data) ->
+    save 'playlists', JSON.stringify data
 
   console.log 'plugmixer_local.js loaded'
