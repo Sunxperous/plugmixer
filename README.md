@@ -1,10 +1,10 @@
-# ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/images/icon48.png) Plugmixer
+# ![](https://raw.githubusercontent.com/Sunxperous/plugmixer/master/images/icon48.png) [Plugmixer](https://plugmixer.sunwj.com)
 
 ## Playlist management for plug.dj!
 
-To start using Plugmixer, visit [plugmixer.sunwj.com](http://plugmixer.sunwj.com).
+### To start using Plugmixer, visit [plugmixer.sunwj.com](https://plugmixer.sunwj.com)!
 
-## Setup
+## Setup and development
 
 Plugmixer uses the following npm modules:
 
