@@ -95,34 +95,23 @@ class Plugmixer
       status.unshift @active
       return status
 
-    isFavoriteRoom = =>
+    idToUse = (defaultRoomId = 'default') =>
       if $(ROOM_FAVORITE_DIV).hasClass 'selected'
-        if User.favorites.indexOf(@id) < 0 # If not favorited,
-          User.lastPlayedIn = @id # Update lastPlayedIn,
-          User.favorites.unshift @id # Add to favorites,
-          User.save()
-        else if User.lastPlayedIn != @id # Already favorited, but different lastPlayedIn,
-          User.lastPlayedIn = @id # Update lastPlayedIn,
-          User.save()
-        return true
+        User.lastPlayedIn = @id
+        if User.favorites.indexOf(@id) < 0
+          User.favorites.unshift @id
 
-      else # Not selected...
-        if User.favorites.indexOf(@id) > -1 # If already favorited,
-          User.lastPlayedIn = 'default' # Update lastPlayedIn,
-          User.favorites.splice User.favorites.indexOf(@id), 1 # Remove from favorites,
-          User.save()
+      else
+        User.lastPlayedIn = 'default'
+        if User.favorites.indexOf(@id) > -1
+          User.favorites.splice User.favorites.indexOf(@id), 1
           Storage.remove 'room', @id
-        else if User.lastPlayedIn != 'default' # Not favorited, but different lastPlayedIn,
-          User.lastPlayedIn = 'default' # Update lastPlayedIn,
-          User.save()
-        return false
 
-    idToUse = (roomId) =>
-      if isFavoriteRoom() then return @id
-      else if roomId? then roomId else 'default'
+      User.save()
+      return User.lastPlayedIn
 
     @save: ->
-      Storage.save 'room', idToUse(), getStatus()
+      Storage.save 'room', idToUse('default'), getStatus()
 
     @toggleActive: ->
       @active = if @active == 1 then 0 else 1
