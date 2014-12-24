@@ -30,6 +30,14 @@
       border-color: #fff;
     }
 
+    #plugmixer a {
+      color: inherit;
+      text-decoration: none;
+    }
+    #plugmixer a:hover, #plugmixer a:active {
+      color: #111;
+    }
+
     #plugmixer button {
       font-size: 11px;
       padding: 4px 16px;
@@ -58,10 +66,22 @@
     #plugmixer-bar-text {
       display: inline-block;
       vertical-align: top;
-      padding: 0 16px;
+      padding: 6px 16px;
       height: 40px;
-      line-height: 38px;
+      line-height: 16px;
       cursor: pointer;
+      word-spacing: 1em;
+      font-size: 10px;
+      color: #999;
+    }
+
+    #plugmixer #plugmixer-title {
+      color: #111;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: lowercase;
+      letter-spacing: 0.5em;
+      display: block;
     }
 
     #plugmixer-logo {
@@ -76,13 +96,6 @@
       -ms-filter:     grayscale(100%);
       -o-filter:      grayscale(100%);
       filter:         grayscale(100%); 
-    }
-
-    #plugmixer-title {
-      font-weight: 600;
-      font-size: 14px;
-      text-transform: lowercase;
-      letter-spacing: 0.5em;
     }
 
     #plugmixer-status {
@@ -335,7 +348,7 @@
       color: #fff;
     }
 
-    #plugmixer-about {
+    #plugmixer-footer {
       padding: 7px 6px 5px 6px;
       height: 16px;
       line-height: 16px;
@@ -347,13 +360,10 @@
       bottom: 40px;
       width: 308px;
     }
-    #plugmixer-about * {
+    #plugmixer-footer * {
       color: #666;
       text-decoration: none;
       margin-left: 16px;
-    }
-    #plugmixer-about a:hover, #plugmixer-about a:active {
-      color: #111;
     }
 
     #plugmixer input::-webkit-input-placeholder {
@@ -466,10 +476,12 @@
     <img id="plugmixer-logo" src="https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/?v=2.0.2">
     <div id="plugmixer-bar-text">
       <span id="plugmixer-title">plugmixer</span>
-      <div id="plugmixer-status">
-        <div id="plugmixer-active">on</div>
-        <div id="plugmixer-inactive">off</div>
-      </div>
+      <a href="https://plugmixer.sunwj.com" target="_blank" id="plugmixer-url">.sunwj.com</a>
+      <span id="plugmixer-version"></span>
+    </div>
+    <div id="plugmixer-status">
+      <div id="plugmixer-active">on</div>
+      <div id="plugmixer-inactive">off</div>
     </div>
     <div id="plugmixer-dropdown-arrow">&#9660;</div>
   </div>
@@ -526,10 +538,8 @@
         </li>
       </ul>
     </div>
-    <div id="plugmixer-about">
+    <div id="plugmixer-footer">
       <a id="plugmixer-try">try youtube sync?</a>
-      <a id="plugmixer-link" href="https://plugmixer.sunwj.com" target="_blank">plugmixer.sunwj.com</a>
-      <span id="plugmixer-version"></span>
     </div>
   </div>
 </div>
