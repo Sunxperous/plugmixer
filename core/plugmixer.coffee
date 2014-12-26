@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.0.3"
-HTML_VERSION = "2.0.3"
+VERSION = "2.1.0"
+HTML_VERSION = "2.1.0"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -485,12 +485,16 @@ class Plugmixer
 
         Helper.Effects.initialize()
 
-        $('#plugmixer-try').click (event) =>
-          if Youtube.login
-            @switchToCard '#plugmixer-sync'
-          else
-            @switchToCard '#plugmixer-login'
-          @updatePlaylists()
+        $('.plugmixer-card-link').click (event) =>
+          switch $(event.currentTarget).data 'card'
+            when 'plugmixer-main'
+              @switchToCard '#plugmixer-main'
+            when 'plugmixer-youtube'
+              if Youtube.login
+                @switchToCard '#plugmixer-sync'
+              else
+                @switchToCard '#plugmixer-login'
+              @updatePlaylists()
 
     @switchToCard = (card) ->
       $('.plugmixer-card').removeClass('plugmixer-flip-in').addClass 'plugmixer-flip-out'
