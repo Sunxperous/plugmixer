@@ -39,7 +39,6 @@ class Plugmixer
   class User
     @id: null
     @favorites: []
-    @selections: []
     @lastPlayedIn: 'default' # Assume last played in default room.
 
     @initialize: ->
@@ -48,17 +47,16 @@ class Plugmixer
 
     @update: (response) ->
       @favorites = response.favorites || @favorites
-      @selections = response.selections || @selections
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
 
       Room.initialize()
-      Selections.initialize()
+      Selections.initialize(response.selections || [])
       Listener.initializeAPI()
 
     @save: ->
       data = {}
       data.favorites = @favorites
-      data.selections = @selections
+      data.selections = Selections.getKeys()
       data.lastPlayedIn = @lastPlayedIn
       Storage.save 'user', @id, data
 
@@ -187,7 +185,7 @@ class Plugmixer
         $(document).on 'click', '#footer',  (event) ->
           Playlists.refreshIfRequired()
           Interface.update()
-          Interface.updateSelections()
+          Selections.updateSelections()
 
     @Effects: class Effects
       # December 2014: Snow!
@@ -310,8 +308,9 @@ class Plugmixer
       else queue.push callback
 
     @getEnabled: ->
-      return playlists.filter (playlist, index) ->
-        return playlist.enabled
+      return playlists.filter (playlist, index) -> return playlist.enabled
+
+    @getEnabledNames: -> return @getEnabled().map (playlist) -> return playlist.name
 
     @getActivated: ->
       return (playlists.filter (playlist, index) ->
@@ -373,7 +372,7 @@ class Plugmixer
         if weightedSelect < playlist.count()
           return playlist
         weightedSelect -= playlist.count()
-      null
+      return null
 
     ###
     # Playlist object.
@@ -452,9 +451,6 @@ class Plugmixer
     SELECTION_CLASS     = 'plugmixer-selection'
     SELECTION_SAMPLE_LI = '#plugmixer-selection-sample'
     IN_USE_CLASS        = 'plugmixer-in-use'
-    NEW_SELECTION_LI    = '#plugmixer-new-selection'
-    SAVE_NEW_BUTTON     = '#plugmixer-save-new'
-    NEW_SELECTION_INPUT = '#plugmixer-input'
     SCROLL_OFFSET       = 40
 
     @initialize: ->
@@ -463,7 +459,6 @@ class Plugmixer
         $(PARENT_DIV).append divHtml
         $('#plugmixer-version').text 'v' + VERSION
         @update()
-        appendSelections()
         appendPlaylists()
 
         # Then bind the events:
@@ -473,13 +468,6 @@ class Plugmixer
             @update()
           else toggleInterface()
 
-        $(SAVE_NEW_BUTTON).click (event) -> expandNewSelection()
-        $('#plugmixer-selection-cancel').click (event) -> collapseNewSelection()
-
-        $(NEW_SELECTION_INPUT).keyup (event) ->
-          if event.keyCode == 13 then addNewSelection() # Enter key.
-
-        $(PARENT_DIV).on 'click', LI_SELECTIONS, clickedSelection
 
         $(PARENT_DIV).on 'click', 'li.plugmixer-playlist', syncPlaylist
 
@@ -506,78 +494,19 @@ class Plugmixer
 
     toggleInterface = =>
       @update()
-      @updateSelections()
       @updatePlaylists()
       $(EXPANDED_DIV).toggleClass HIDE_CLASS
       $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
       $(MAIN_DIV).toggleClass 'plugmixer-hover'
       if $('.' + IN_USE_CLASS).length > 0
         $(SELECTIONS_UL).scrollTop $('.' + IN_USE_CLASS).position().top - SCROLL_OFFSET
-      if $(NEW_SELECTION_LI).is(':visible')
-        $(NEW_SELECTION_LI).addClass HIDE_CLASS
-        $(SAVE_NEW_BUTTON).prop 'disabled', false
-        collapseNewSelection()
+      if $('#plugmixer-input').is(':visible')
+        Selections.Card.collapseNew()
       if not $(EXPANDED_DIV).hasClass HIDE_CLASS # If expanding...
         Helper.Effects.draw()
         ga 'plugmixer.send', 'event', 'main', 'click', 'expand'
       else
         ga 'plugmixer.send', 'event', 'main', 'click', 'collapse'
-
-    collapseNewSelection = ->
-      $(NEW_SELECTION_INPUT).blur()
-      $(NEW_SELECTION_LI).addClass HIDE_CLASS
-      $(SAVE_NEW_BUTTON).prop 'disabled', false
-    expandNewSelection = ->
-      $(NEW_SELECTION_LI).removeClass HIDE_CLASS
-      $(SAVE_NEW_BUTTON).prop 'disabled', true
-      $(NEW_SELECTION_INPUT).focus()
-      $(NEW_SELECTION_INPUT).val ''
-      $(NEW_SELECTION_LI).children('.plugmixer-selection-playlists')
-        .text Playlists.getEnabled().map((p) -> return p.name).join(', ')
-
-    addNewSelection = =>
-      ga 'plugmixer.send', 'event', 'group', 'enter'
-      selectionObj = Selections.add $(NEW_SELECTION_INPUT).val()
-      collapseNewSelection()
-      $(NEW_SELECTION_LI).after selectionLi(selectionObj)
-      @updateSelections()
-
-    clickedSelection = (event) =>
-      timestamp = $(event.currentTarget).data 'timestamp' # Because $(this) is $(document).
-      if event.target.className == 'plugmixer-selection-delete'
-        ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
-        $(event.currentTarget).addClass HIDE_CLASS
-        Selections.delete timestamp
-      else
-        ga 'plugmixer.send', 'event', 'group', 'click', 'use'
-        Selections.use timestamp
-        @updateSelections()
-        updateNumber()
-        collapseNewSelection()
-
-    selectionLi = (selectionObj) ->
-      li = $(SELECTION_SAMPLE_LI).clone().removeAttr('id').addClass SELECTION_CLASS
-      li.children('.plugmixer-selection-name').text selectionObj.name
-      li.children('.plugmixer-selection-playlists').text selectionObj.playlists.join(', ')
-      li.data 'timestamp', selectionObj.timestamp
-      return li
-
-    appendSelections = ->
-      Object.keys(Selections.list).sort((a, b) ->
-        if a > b then return -1
-        if a < b then return 1
-        return 0
-      ).forEach (timestamp) ->
-        $(SELECTIONS_UL).append selectionLi(Selections.get(timestamp))        
-
-    @updateSelections: ->
-      activePlaylists = Playlists.getEnabled().map (playlist) -> return playlist.name
-      $(LI_SELECTIONS).each (index) ->
-        selection = Selections.get $(this).data('timestamp')
-        if not selection? then return $(this).remove() # Remove deleted selections.
-        same = $(selection.playlists).not(activePlaylists).length == 0 and
-          $(activePlaylists).not(selection.playlists).length == 0
-        if same then $(this).addClass IN_USE_CLASS else $(this).removeClass IN_USE_CLASS
 
     playlistLi = (playlist) ->
       li = $('#plugmixer-playlist-sample').clone().removeAttr('id').addClass 'plugmixer-playlist'
@@ -596,21 +525,18 @@ class Plugmixer
       Youtube.syncPlaylist id
 
     timestampToAgo = (timestamp) ->
-      diff = (Date.now() - timestamp) / 1000 # Difference in seconds.
-      if diff < 60 # 60 seconds / 1 minute.
+      diff = (Date.now() - timestamp) / 1000      # Difference in seconds.
+      if diff < 60                                # Within 60 seconds / 1 minute.
         return 'just now'
-      else if diff < 60 * 60 # 60 minutes / 1 hour.
+      else if diff < 60 * 60                      # Within 60 minutes / 1 hour.
         minutes = parseInt(diff / 60)
-        if minutes == 1 then return '1 minute ago'
-        else return "#{minutes} minutes ago"
-      else if diff < 60 * 60 * 24 # 24 hours / 1 day.
+        return "#{minutes} minute#{minutes != 1 ? 's'} ago"
+      else if diff < 60 * 60 * 24                 # Within 24 hours / 1 day.
         hours = parseInt(diff / (60 * 60))
-        if hours == 1 then return '1 hour ago'
-        else return "#{hours} hours ago"
-      else # More than 1 day.
+        return "#{hours} hour#{hours != 1 ? 's'} ago"
+      else                                        # More than 1 day.
         days = parseInt(diff / (60 * 60 * 24))
-        if days == 1 then return '1 day ago'
-        else return "#{days} days ago"
+        return "#{days} day#{days != 1 ? 's'} ago"
 
     @updatePlaylists: ->
       $('.plugmixer-playlist').each (index) ->
@@ -640,50 +566,105 @@ class Plugmixer
   #   Timestamps are used as the key for storage of selections.
   ###
   class Selections
-    @list = {}
+    list = {}
 
-    @initialize: ->
-      Storage.load 'selections', User.id
+    @initialize: -> Storage.load 'selections', User.id
+
+    @getKeys: -> return Object.keys list
+
+    @getSelection: (timestamp) -> return list[timestamp]
 
     @update: (response) -> # Response is an object with key-values selectionKey-selections.
+      Interface.initialize()
       Object.keys(response).forEach (selectionKey) =>
         timestamp = selectionKey.slice selectionKey.indexOf('_') + 1, selectionKey.length
-        @list[timestamp] = new Selection(timestamp, response[selectionKey])
-      Interface.initialize()
+        list[timestamp] = new Selection(timestamp, response[selectionKey])
+      $('#plugmixer-save-new').click (event) -> expandNewSelection()
+      $('#plugmixer-selection-cancel').click (event) -> collapseNewSelection()
 
     @add: (name) ->
       timestamp = Date.now().toString()
-      selection = Playlists.getEnabled().map (playlist) -> return playlist.name
+      selection = Playlists.getEnabledNames()
+      list[timestamp] = new Selection(timestamp, selection)
 
-      # Saving inidividual selection.
-      selection.unshift name
-      Storage.save 'selection', timestamp, selection
-
-      # Appending to list.
-      @list[timestamp] = new Selection(timestamp, selection)
-
-      # Saving user's selections (as timestamps).
-      User.selections.unshift timestamp
+      list[timestamp].save()
       User.save()
 
-      return @get timestamp
+      return list[timestamp]
 
-    @get: (timestamp) -> return @list[timestamp]
+    class Card
+      $('#plugmixer-input').keyup (event) =>
+        if event.keyCode == 13 then @addNew() # Enter key.
 
-    @use: (timestamp) ->
-      Playlists.update @get(timestamp).playlists
-      Room.save()
+      @addNew: ->
+        ga 'plugmixer.send', 'event', 'group', 'enter'
+        selection = Selections.add $('#plugmixer-input').val()
+        @collapseNew()
 
-    @delete: (timestamp) ->
-      delete @list[timestamp]
-      User.selections.splice User.selections.indexOf(timestamp), 1
-      User.save()
-      Storage.remove 'selection', timestamp
+      @collapseNew: ->
+        $('#plugmixer-input').blur() # Otherwise the interface will bug out.
+        $('#plugmixer-new-selection').addClass 'plugmixer-hide'
+        $('#plugmixer-save-new').prop 'disabled', false
+      @expandNew: ->
+        $('#plugmixer-new-selection').removeClass 'plugmixer-hide'
+        $('#plugmixer-save-new').prop 'disabled', true
+        $('#plugmixer-input').focus()
+        $('#plugmixer-input').val ''
+        $('#plugmixer-new-selection').children('.plugmixer-selection-playlists')
+          .text Playlists.getEnabledNames().join(', ')
+
+      clickedSelection: (event) =>
+        selection = list[$(event.currentTarget).data('timestamp')]
+        if event.target.className == 'plugmixer-selection-delete'
+          ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
+          selection.remove()
+        else
+          ga 'plugmixer.send', 'event', 'group', 'click', 'use'
+          selection.use()
+
+          @update()
+          @collapseNew()
+
+      @update: ->
+        activePlaylists = Playlists.getEnabledNames()
+        Object.keys(list).forEach (timestamp) -> list[timestamp].scan activePlaylists
+
+    @Card = Card
 
     class Selection
-      constructor: (@timestamp, storedData) ->
-        @name = storedData.splice 0, 1
-        @playlists = storedData
+      constructor: (@timestamp, data) ->
+        @name = data.splice 0, 1
+        @playlists = data
+
+        @li = $('#plugmixer-selection-sample').clone().removeAttr('id').addClass 'plugmixer-selection'
+        @li.children('.plugmixer-selection-name').text @name
+        @li.children('.plugmixer-selection-playlists').text @playlists.join(', ')
+        @li.data 'timestamp', @timestamp
+        @li.click Card.clickedSelection
+
+        $('#plugmixer-new-selection').after @li
+
+      save: ->
+        data = @playlists.slice(0)
+        data.unshift @name
+        Storage.save 'selection', @timestamp, data
+
+      scan: (activePlaylists) ->
+        same = $(@playlists).not(activePlaylists).length == 0 and
+          $(activePlaylists).not(@playlists).length == 0 # jQuery array comparison.
+        if same then @li.addClass 'plugmixer-in-use' else @li.removeClass 'plugmixer-in-use'
+
+      remove: ->
+        @li.addClass 'plugmixer-hide'
+        delete list[@timestamp]
+        User.save()
+        Storage.remove 'selection', @timestamp
+        setTimeout (-> @li.remove()), 5000
+
+      use: ->
+        Playlists.update @playlists
+        Room.save()
+
 
   ###
   # YouTube sync.
