@@ -22,9 +22,14 @@ class Plugmixer
       setTimeout @start, INITIALIZATION_TIMEOUT
 
   initialize = ->
-    console.log 'Plugmixer.initialize'
-    Listener.initializeWindowMessage()
-    User.initialize()
+    User.loadAfter WindowMessageListener
+    Playlists.loadAfter WindowMessageListener, Interface, User
+    Selections.loadAfter WindowMessageListener, Interface, User
+    Room.loadAfter WindowMessageListener, Playlists
+    ApiListener.loadAfter Room
+
+    WindowMessageListener.initialize()
+    Interface.initialize()
     Youtube.preInitialize()
 
     if TRACKING_CODE?
@@ -32,11 +37,33 @@ class Plugmixer
       ga 'plugmixer.set', 'contentGroup1', 'Plug.dj rooms'
       ga 'plugmixer.set', 'referrer', ''
 
+  ###
+  # For loading dependencies of classes.
+  ###
+  class Component
+    @attach: (component) ->
+      if !@attachments? then @attachments = []
+      @attachments.push component
+
+    @done: ->
+      return if !@attachments?
+      @attachments.forEach (component) => component.ready @
+      @attachments = null
+
+    @loadAfter: (components...) ->
+      @after = components
+      @after.forEach (component) => component.attach @
+
+    @ready = (component) ->
+      index = @after.indexOf component
+      if index > -1 then @after.splice index, 1
+      if @after.length == 0 then @initialize()
+
 
   ###
   # User management.
   ###
-  class User
+  class User extends Component
     @id: null
     @favorites: []
     @lastPlayedIn: 'default' # Assume last played in default room.
@@ -45,13 +72,10 @@ class Plugmixer
       @id = API.getUser().id
       Storage.load 'user', @id
 
-    @update: (response) ->
+    @load: (response) ->
       @favorites = response.favorites || @favorites
       @lastPlayedIn = response.lastPlayedIn || @lastPlayedIn
-
-      Room.initialize()
-      Selections.initialize(response.selections || [])
-      Listener.initializeAPI()
+      @done()
 
     @save: ->
       data = {}
@@ -64,28 +88,26 @@ class Plugmixer
   ###
   # Room management.
   ###
-  class Room
-    ROOM_FAVORITE_DIV = '#room-bar .favorite'
-
+  class Room extends Component
     @id: null
     @active: 1
 
     @initialize: ->
       @id = API.getRoom().id
-      Playlists.initialize()
       Storage.load 'room', idToUse(User.lastPlayedIn)
 
-      ga 'plugmixer.set', page: API.getRoom().path, title: API.getRoom().name
-      ga 'plugmixer.send', 'pageview'
-
-    @update: (response) -> # Response is a Room data array.
+    @load: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
         @active = 1
         @save()
       else # Existing room...
         @active = response.splice(0, 1)[0]
-        Playlists.afterInitialization ->
-          Playlists.update response # Remainder of response contains playlist data.
+        Playlists.update response
+
+      ga 'plugmixer.set', page: API.getRoom().path, title: API.getRoom().name
+      ga 'plugmixer.send', 'pageview'
+
+      @done()
 
     getStatus = =>
       status = Playlists.getEnabled().map (playlist) ->
@@ -94,7 +116,7 @@ class Plugmixer
       return status
 
     idToUse = (defaultRoomId = 'default') =>
-      if $(ROOM_FAVORITE_DIV).hasClass 'selected'
+      if $('#room-bar .favorite').hasClass 'selected'
         User.lastPlayedIn = @id
         if User.favorites.indexOf(@id) < 0
           User.favorites.unshift @id
@@ -121,19 +143,12 @@ class Plugmixer
       @id = newRoom.id
       Storage.load 'room', idToUse(User.lastPlayedIn)
 
-      ga 'plugmixer.set', page: newRoom.path, title: newRoom.name
-      ga 'plugmixer.send', 'pageview'
-
 
   ###
-  # Event listeners.
+  # Window message listener.
   ###
-  class Listener
-
-    ###
-    # Window message listener.
-    ###
-    @initializeWindowMessage: ->
+  class WindowMessageListener extends Component
+    @initialize: ->
       window.addEventListener 'message', (event) ->
         try
           data = JSON.parse event.data
@@ -145,16 +160,23 @@ class Plugmixer
         if data.plugmixer == 'response'
           switch data.type
             when 'user' # Should only happen once.
-              User.update data.response
-            when 'room' then Room.update data.response # Should only happen once.
-            when 'selections' then Selections.update data.response
+              User.load data.response
+            when 'room' then Room.load data.response # Should only happen once.
+            when 'selections' then Selections.load data.response
             when 'playlists' then Youtube.update data.response
 
-    ###
-    # API listener.
-    ###
-    @initializeAPI: ->
+      @done()
+
+
+  ###
+  # API listener.
+  ###
+  class ApiListener extends Component
+    @initialize: ->
       Helper.TitleText.update()
+
+      Helper.PlaylistRefresh.initialize()
+
       API.on API.ADVANCE, (data) ->
         Helper.TitleText.update()
         if data.dj? and data.dj.username == API.getUser().username
@@ -163,12 +185,10 @@ class Plugmixer
       API.on API.ROOM_CHANGE, (oldRoom, newRoom) ->
         Room.changedTo newRoom
 
-      Helper.PlaylistRefresh.initialize()
-
       API.on API.PLAYLIST_ACTIVATE, (playlist) ->
         API.chatLog "Next playing from #{playlist.name}"
 
-      Room.initialize()
+      @done()
 
 
   ###
@@ -185,7 +205,7 @@ class Plugmixer
         $(document).on 'click', '#footer',  (event) ->
           Playlists.refreshIfRequired()
           Interface.update()
-          Selections.updateSelections()
+          Selections.Card.update()
 
     @Effects: class Effects
       # December 2014: Snow!
@@ -284,28 +304,17 @@ class Plugmixer
   ###
   # Playlists management.
   ###
-  class Playlists
+  class Playlists extends Component
     playlists = []
     activePlaylist = null
-    queue = []
-    initialized = false
 
     @initialize: ->
-      playlists = API.getPlaylists().map (playlist) ->
-        return new Playlist(playlist)
-      activePlaylist = @getActivated()
-
       API.getPlaylists (_playlists) => # Retrieve id as well.
         playlists = _playlists.map (playlist) ->
           return new Playlist(playlist)
 
         activePlaylist = @getActivated()
-        initialized = true
-        queue.forEach (callback) -> callback()
-
-    @afterInitialization: (callback) ->
-      if initialized then callback()
-      else queue.push callback
+        @done()
 
     @getEnabled: ->
       return playlists.filter (playlist, index) -> return playlist.enabled
@@ -431,7 +440,7 @@ class Plugmixer
   ###
   # Interface.
   ###
-  class Interface
+  class Interface extends Component
     DIV_HTML_SRC        = PLUGMIXER_HTML + '?v=' + HTML_VERSION
 
     PARENT_DIV          = '#room'
@@ -454,20 +463,16 @@ class Plugmixer
     SCROLL_OFFSET       = 40
 
     @initialize: ->
-      # Retrieves the html.
       $.get DIV_HTML_SRC, (divHtml) =>
         $(PARENT_DIV).append divHtml
         $('#plugmixer-version').text 'v' + VERSION
         @update()
-        appendPlaylists()
 
-        # Then bind the events:
         $(BAR_DIV).click (event) =>
           if event.target.offsetParent.id == STATUS_DIV_ID
             Room.toggleActive()
             @update()
           else toggleInterface()
-
 
         $(PARENT_DIV).on 'click', 'li.plugmixer-playlist', syncPlaylist
 
@@ -483,6 +488,8 @@ class Plugmixer
               else
                 @switchToCard '#plugmixer-login'
               @updatePlaylists()
+
+        @done()
 
     @switchToCard = (card) ->
       $('.plugmixer-card').removeClass('plugmixer-flip-in').addClass 'plugmixer-flip-out'
@@ -515,10 +522,10 @@ class Plugmixer
       li.attr 'id', "plugmixer-playlist-#{playlist.id}"
       return li
 
-    appendPlaylists = ->
-      Playlists.afterInitialization ->
-        Playlists.all().forEach (playlist) ->
-          $('#plugmixer-playlists').append playlistLi(playlist)
+    # appendPlaylists = ->
+    #   Playlists.afterInitialization ->
+    #     Playlists.all().forEach (playlist) ->
+    #       $('#plugmixer-playlists').append playlistLi(playlist)
 
     syncPlaylist = (event) ->
       id = $(event.currentTarget).data 'id'
@@ -565,27 +572,29 @@ class Plugmixer
   # Playlist selections management.
   #   Timestamps are used as the key for storage of selections.
   ###
-  class Selections
+  class Selections extends Component
     list = {}
 
-    @initialize: -> Storage.load 'selections', User.id
+    @initialize: ->
+      Storage.load 'selections', User.id
+      Card.initialize()
 
     @getKeys: -> return Object.keys list
 
     @getSelection: (timestamp) -> return list[timestamp]
 
-    @update: (response) -> # Response is an object with key-values selectionKey-selections.
-      Interface.initialize()
+    @load: (response) -> # Response is an object with key-values selectionKey-selections.
       Object.keys(response).forEach (selectionKey) =>
         timestamp = selectionKey.slice selectionKey.indexOf('_') + 1, selectionKey.length
-        list[timestamp] = new Selection(timestamp, response[selectionKey])
-      $('#plugmixer-save-new').click (event) -> expandNewSelection()
-      $('#plugmixer-selection-cancel').click (event) -> collapseNewSelection()
+        name = response[selectionKey].splice 0, 1
+        list[timestamp] = new Selection(timestamp, name, response[selectionKey])
+
+      @done()
 
     @add: (name) ->
       timestamp = Date.now().toString()
       selection = Playlists.getEnabledNames()
-      list[timestamp] = new Selection(timestamp, selection)
+      list[timestamp] = new Selection(timestamp, name, selection)
 
       list[timestamp].save()
       User.save()
@@ -593,19 +602,21 @@ class Plugmixer
       return list[timestamp]
 
     class Card
-      $('#plugmixer-input').keyup (event) =>
-        if event.keyCode == 13 then @addNew() # Enter key.
+      @initialize: ->
+        $('#plugmixer-save-new').click (event) => expandNew()
+        $('#plugmixer-selection-cancel').click (event) => collapseNew()
+        $('#plugmixer-input').keyup (event) =>
+          if event.keyCode == 13 then @addNew() # Enter key.
 
       @addNew: ->
-        ga 'plugmixer.send', 'event', 'group', 'enter'
         selection = Selections.add $('#plugmixer-input').val()
-        @collapseNew()
-
-      @collapseNew: ->
+        collapseNew()
+        ga 'plugmixer.send', 'event', 'group', 'enter'
+      collapseNew = ->
         $('#plugmixer-input').blur() # Otherwise the interface will bug out.
         $('#plugmixer-new-selection').addClass 'plugmixer-hide'
         $('#plugmixer-save-new').prop 'disabled', false
-      @expandNew: ->
+      expandNew = ->
         $('#plugmixer-new-selection').removeClass 'plugmixer-hide'
         $('#plugmixer-save-new').prop 'disabled', true
         $('#plugmixer-input').focus()
@@ -613,34 +624,27 @@ class Plugmixer
         $('#plugmixer-new-selection').children('.plugmixer-selection-playlists')
           .text Playlists.getEnabledNames().join(', ')
 
-      clickedSelection: (event) =>
-        selection = list[$(event.currentTarget).data('timestamp')]
-        if event.target.className == 'plugmixer-selection-delete'
-          ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
-          selection.remove()
-        else
-          ga 'plugmixer.send', 'event', 'group', 'click', 'use'
-          selection.use()
-
-          @update()
-          @collapseNew()
-
       @update: ->
         activePlaylists = Playlists.getEnabledNames()
         Object.keys(list).forEach (timestamp) -> list[timestamp].scan activePlaylists
+        collapseNew()
+        Interface.update()
 
     @Card = Card
 
     class Selection
-      constructor: (@timestamp, data) ->
-        @name = data.splice 0, 1
-        @playlists = data
-
+      constructor: (@timestamp, @name, @playlists) ->
         @li = $('#plugmixer-selection-sample').clone().removeAttr('id').addClass 'plugmixer-selection'
         @li.children('.plugmixer-selection-name').text @name
         @li.children('.plugmixer-selection-playlists').text @playlists.join(', ')
-        @li.data 'timestamp', @timestamp
-        @li.click Card.clickedSelection
+
+        @li.click (event) =>
+          if event.target.className == 'plugmixer-selection-delete'
+            @remove()
+          else
+            @use()
+
+          Card.update()
 
         $('#plugmixer-new-selection').after @li
 
@@ -659,11 +663,13 @@ class Plugmixer
         delete list[@timestamp]
         User.save()
         Storage.remove 'selection', @timestamp
-        setTimeout (-> @li.remove()), 5000
+        setTimeout (=> @li.remove()), 5000
+        ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
 
       use: ->
         Playlists.update @playlists
         Room.save()
+        ga 'plugmixer.send', 'event', 'group', 'click', 'use'
 
 
   ###
