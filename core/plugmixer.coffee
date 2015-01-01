@@ -24,8 +24,8 @@ class Plugmixer
   initialize = ->
     User.loadAfter WindowMessageListener
     Playlists.loadAfter WindowMessageListener, Interface, User
-    Selections.loadAfter WindowMessageListener, Interface, User
     Room.loadAfter WindowMessageListener, Playlists
+    Selections.loadAfter WindowMessageListener, Interface, User, Room
     ApiListener.loadAfter Room
 
     WindowMessageListener.initialize()
@@ -99,6 +99,7 @@ class Plugmixer
     @load: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
         @active = 1
+        Playlists.enableAll()
         @save()
       else # Existing room...
         @active = response.splice(0, 1)[0]
@@ -177,6 +178,8 @@ class Plugmixer
 
       Helper.PlaylistRefresh.initialize()
 
+      Helper.Effects.initialize()
+
       API.on API.ADVANCE, (data) ->
         Helper.TitleText.update()
         if data.dj? and data.dj.username == API.getUser().username
@@ -204,8 +207,6 @@ class Plugmixer
       @initialize: ->
         $(document).on 'click', '#footer',  (event) ->
           Playlists.refreshIfRequired()
-          Interface.update()
-          Selections.Card.update()
 
     @Effects: class Effects
       # December 2014: Snow!
@@ -321,33 +322,32 @@ class Plugmixer
 
     @getEnabledNames: -> return @getEnabled().map (playlist) -> return playlist.name
 
-    @getActivated: ->
-      return (playlists.filter (playlist, index) ->
-        return playlist.isActive()
-      )[0]
+    @getActivated: -> return (playlists.filter (playlist, index) -> return playlist.isActive())[0]
 
     @all: -> return playlists
+
+    @enableAll: -> playlists.forEach (playlist) -> playlist.enable()
 
     @getById: (id) ->
       return playlists.filter((playlist) -> return playlist.id.toString() == id.toString())[0]
 
     @refreshIfRequired: ->
-      refresh = false
-      for playlist in playlists
-        # Refresh if any of the playlists no longer have a dom parent.
-        if playlist.dom.parent().length == 0 then refresh = true
-
-      if refresh
-        playlistNames = @getEnabled().map (playlist) -> return playlist.name
-        refreshPlaylists(playlistNames)
+      refresh = playlists.some (playlist) -> return playlist.dom.parent().length == 0
+      if refresh then refreshPlaylists @getEnabledNames
 
     refreshPlaylists = (playlistNames) =>
       API.getPlaylists (_playlists) =>
-        playlists = _playlists.map (playlist) ->
-          return new Playlist(playlist)
-        
-        activePlaylist = @getActivated()
-        @update(playlistNames)
+        playlists.forEach (playlist) ->
+          newPlaylist = _playlists.filter((_playlist) -> return _playlist.id == playlist.id)[0]
+          if newPlaylist?
+            playlist.refresh newPlaylist
+            _playlists.splice _playlists.indexOf(newPlaylist), 1
+          else playlist.remove()
+
+        _playlists.forEach (_playlist) ->
+          playlists.push new Playlist(_playlist)
+
+        Selections.Card.update()
 
     @update: (playlistNames) ->
       @refreshIfRequired()
@@ -357,12 +357,11 @@ class Plugmixer
           if playlist.name == playlistName then enable = true
         if enable then playlist.enable() else playlist.disable()
 
-      if not @getActivated().enabled
-        @activateAnother()
+      if not @getActivated().enabled then @activateAnother()
 
     @activateAnother: (playlist) ->
       return if playlist? and playlist != activePlaylist # Do nothing if not the same playlist.
-      @activateRandom() # if !@getActivated().enabled
+      @activateRandom()
 
     @activateRandom: ->
       return if Room.active != 1 # Do nothing if not active.
@@ -383,6 +382,15 @@ class Plugmixer
         weightedSelect -= playlist.count()
       return null
 
+    @remove: (playlist) -> playlists.splice playlists.indexOf(playlist), 1
+
+    class Card
+      @initialize: ->
+
+      @update: ->
+
+    @Card = Card
+
     ###
     # Playlist object.
     ###
@@ -397,23 +405,51 @@ class Plugmixer
       constructor: (playlist) ->
         @dom = playlist.$
         @name = playlist.name
-        @enabled = true
+        @enabled = false
         @id = playlist.id
+        @youtube = null
 
+        @li = $('#plugmixer-playlist-sample').clone().removeAttr('id').addClass 'plugmixer-playlist'
+        @li.children('.plugmixer-playlist-name').text @name
+        @li.attr 'id', "plugmixer-playlist-#{playlist.id}"
+        # @li.click (event) => Youtube.syncPlaylist @id
+
+        @registerMouseup()
+        if @enabled then @enable() else @disable()
+
+        $('#plugmixer-playlists').append @li
+
+      refresh: (updatedPlaylist) ->
+        @dom = updatedPlaylist.$
+        @registerMouseup()
+        @name = updatedPlaylist.name
+        @li.children('.plugmixer-playlist-name').text @name
+        if @enabled then @enable() else @disable()
+
+      registerMouseup: ->
+        @dom.children(SPAN_COUNT).unbind 'mouseup'
         @dom.children(SPAN_COUNT).mouseup (event) => # Mouseup to prevent parent triggers.
           @toggle()
           event.preventDefault()
-          event.stopPropagation();
+          event.stopPropagation()
+
+      remove: ->
+        @li.remove()
+        Playlists.remove @
+        Selections.Card.update()
+        Room.save()
 
       count: -> return parseInt(@dom.children(SPAN_COUNT).text())
 
       disable: ->
         @enabled = false
-        @dom.fadeTo(FADE_DURATION, FADE_OPACITY)
+        @dom.fadeTo FADE_DURATION, FADE_OPACITY
+        @li.fadeTo FADE_DURATION, FADE_OPACITY
 
       enable: ->
         @enabled = true
-        @dom.fadeTo(FADE_DURATION, 1)
+        @dom.fadeTo FADE_DURATION, 1
+        @li.fadeTo FADE_DURATION, 1
 
       toggle: ->
         if @enabled
@@ -426,10 +462,10 @@ class Plugmixer
           @enable()
           if Playlists.getEnabled().length == 1 and !@isActive()
             Playlists.activateRandom()
+        Selections.Card.update()
         Room.save()
 
-      activate: ->
-        API.activatePlaylist @dom
+      activate: -> API.activatePlaylist @dom
 
       isActivating: ->
         return @dom.children(SPINNER).length > 0
@@ -442,94 +478,53 @@ class Plugmixer
   ###
   class Interface extends Component
     DIV_HTML_SRC        = PLUGMIXER_HTML + '?v=' + HTML_VERSION
-
-    PARENT_DIV          = '#room'
-    MAIN_DIV            = '#plugmixer'
-    BAR_DIV             = '#plugmixer-bar'
-    BAR_LOGO            = '#plugmixer-logo'
-    STATUS_DIV_ID       = 'plugmixer-status'
-    STATUS_ACTIVE_DIV   = '#plugmixer-active'
-    STATUS_INACTIVE_DIV = '#plugmixer-inactive'
-    EXPANDED_DIV        = '#plugmixer-expanded'
-    HIDE_CLASS          = 'plugmixer-hide'
-    DROPDOWN_ARROW_DIV  = '#plugmixer-dropdown-arrow'
-    ROTATE_CLASS        = 'plugmixer-rotate'
-    NUMBER_DIV          = '#plugmixer-number'
-    SELECTIONS_UL       = '#plugmixer-selections'
-    LI_SELECTIONS       = 'li.plugmixer-selection'
-    SELECTION_CLASS     = 'plugmixer-selection'
-    SELECTION_SAMPLE_LI = '#plugmixer-selection-sample'
-    IN_USE_CLASS        = 'plugmixer-in-use'
+    CLASS_HIDE          = 'plugmixer-hide'
+    CLASS_IN_USE        = 'plugmixer-in-use'
     SCROLL_OFFSET       = 40
 
     @initialize: ->
       $.get DIV_HTML_SRC, (divHtml) =>
-        $(PARENT_DIV).append divHtml
+        $('#room').append divHtml
         $('#plugmixer-version').text 'v' + VERSION
-        @update()
 
-        $(BAR_DIV).click (event) =>
-          if event.target.offsetParent.id == STATUS_DIV_ID
+        $('#plugmixer-bar').click (event) =>
+          if event.target.offsetParent.id == 'plugmixer-status'
             Room.toggleActive()
-            @update()
+            @updateStatus()
           else toggleInterface()
-
-        $(PARENT_DIV).on 'click', 'li.plugmixer-playlist', syncPlaylist
-
-        Helper.Effects.initialize()
 
         $('.plugmixer-card-link').click (event) =>
           switch $(event.currentTarget).data 'card'
-            when 'plugmixer-main'
-              @switchToCard '#plugmixer-main'
+            when 'plugmixer-main' then @switchToCard '#plugmixer-main'
             when 'plugmixer-youtube'
               if Youtube.login
                 @switchToCard '#plugmixer-sync'
               else
                 @switchToCard '#plugmixer-login'
-              @updatePlaylists()
 
+        @updateStatus()
         @done()
 
     @switchToCard = (card) ->
       $('.plugmixer-card').removeClass('plugmixer-flip-in').addClass 'plugmixer-flip-out'
       $(card).removeClass('plugmixer-flip-out').addClass 'plugmixer-flip-in'
 
-    @update: ->
-      updateStatus()
-      updateNumber()
+    @updateStatus: ->
+      $('#plugmixer-logo').toggleClass 'plugmixer-desaturate', !Room.active
+      $('#plugmixer-inactive').toggleClass 'show', !Room.active
+      $('#plugmixer-active').toggleClass 'show', !!Room.active
 
     toggleInterface = =>
-      @update()
-      @updatePlaylists()
-      $(EXPANDED_DIV).toggleClass HIDE_CLASS
-      $(DROPDOWN_ARROW_DIV).toggleClass ROTATE_CLASS
-      $(MAIN_DIV).toggleClass 'plugmixer-hover'
-      if $('.' + IN_USE_CLASS).length > 0
-        $(SELECTIONS_UL).scrollTop $('.' + IN_USE_CLASS).position().top - SCROLL_OFFSET
-      if $('#plugmixer-input').is(':visible')
-        Selections.Card.collapseNew()
-      if not $(EXPANDED_DIV).hasClass HIDE_CLASS # If expanding...
+      $('#plugmixer-expanded').toggleClass CLASS_HIDE
+      $('#plugmixer-dropdown-arrow').toggleClass 'plugmixer-rotate'
+      $('#plugmixer').toggleClass 'plugmixer-hover'
+      if $('.' + CLASS_IN_USE).length > 0
+        $('#plugmixer-selections').scrollTop $('.' + CLASS_IN_USE).position().top - SCROLL_OFFSET
+      if not $('#plugmixer-expanded').hasClass CLASS_HIDE # If expanding...
         Helper.Effects.draw()
         ga 'plugmixer.send', 'event', 'main', 'click', 'expand'
       else
         ga 'plugmixer.send', 'event', 'main', 'click', 'collapse'
-
-    playlistLi = (playlist) ->
-      li = $('#plugmixer-playlist-sample').clone().removeAttr('id').addClass 'plugmixer-playlist'
-      li.children('.plugmixer-playlist-name').text playlist.name
-      li.data 'id', playlist.id.toString()
-      li.attr 'id', "plugmixer-playlist-#{playlist.id}"
-      return li
-
-    # appendPlaylists = ->
-    #   Playlists.afterInitialization ->
-    #     Playlists.all().forEach (playlist) ->
-    #       $('#plugmixer-playlists').append playlistLi(playlist)
-
-    syncPlaylist = (event) ->
-      id = $(event.currentTarget).data 'id'
-      Youtube.syncPlaylist id
 
     timestampToAgo = (timestamp) ->
       diff = (Date.now() - timestamp) / 1000      # Difference in seconds.
@@ -545,28 +540,6 @@ class Plugmixer
         days = parseInt(diff / (60 * 60 * 24))
         return "#{days} day#{days != 1 ? 's'} ago"
 
-    @updatePlaylists: ->
-      $('.plugmixer-playlist').each (index) ->
-        id = $(this).data 'id'
-        playlist = Youtube.getIfSync id
-        if playlist?
-          $(this).addClass 'plugmixer-playlist-synced'
-          $(this).children('.plugmixer-playlist-syncinfo').text timestampToAgo(playlist.lastSynced)
-        else
-          $(this).removeClass 'plugmixer-playlist-synced'
-
-    updateNumber = -> $(NUMBER_DIV).text Playlists.getEnabled().length
-
-    updateStatus = ->
-      if Room.active
-        $(BAR_LOGO).removeClass 'plugmixer-desaturate'
-        $(STATUS_INACTIVE_DIV).removeClass 'show'
-        $(STATUS_ACTIVE_DIV).addClass 'show'
-      else
-        $(BAR_LOGO).addClass 'plugmixer-desaturate'
-        $(STATUS_ACTIVE_DIV).removeClass 'show'
-        $(STATUS_INACTIVE_DIV).addClass 'show'
-
 
   ###
   # Playlist selections management.
@@ -577,7 +550,6 @@ class Plugmixer
 
     @initialize: ->
       Storage.load 'selections', User.id
-      Card.initialize()
 
     @getKeys: -> return Object.keys list
 
@@ -589,6 +561,7 @@ class Plugmixer
         name = response[selectionKey].splice 0, 1
         list[timestamp] = new Selection(timestamp, name, response[selectionKey])
 
+      Card.initialize()
       @done()
 
     @add: (name) ->
@@ -597,6 +570,7 @@ class Plugmixer
       list[timestamp] = new Selection(timestamp, name, selection)
 
       list[timestamp].save()
+      list[timestamp].use()
       User.save()
 
       return list[timestamp]
@@ -606,9 +580,10 @@ class Plugmixer
         $('#plugmixer-save-new').click (event) => expandNew()
         $('#plugmixer-selection-cancel').click (event) => collapseNew()
         $('#plugmixer-input').keyup (event) =>
-          if event.keyCode == 13 then @addNew() # Enter key.
+          if event.keyCode == 13 then addNew() # Enter key.
+        @update()
 
-      @addNew: ->
+      addNew = ->
         selection = Selections.add $('#plugmixer-input').val()
         collapseNew()
         ga 'plugmixer.send', 'event', 'group', 'enter'
@@ -626,9 +601,9 @@ class Plugmixer
 
       @update: ->
         activePlaylists = Playlists.getEnabledNames()
+        $('#plugmixer-number').text activePlaylists.length
         Object.keys(list).forEach (timestamp) -> list[timestamp].scan activePlaylists
         collapseNew()
-        Interface.update()
 
     @Card = Card
 
@@ -643,8 +618,6 @@ class Plugmixer
             @remove()
           else
             @use()
-
-          Card.update()
 
         $('#plugmixer-new-selection').after @li
 
@@ -669,6 +642,7 @@ class Plugmixer
       use: ->
         Playlists.update @playlists
         Room.save()
+        Card.update()
         ga 'plugmixer.send', 'event', 'group', 'click', 'use'
 
 
@@ -819,7 +793,6 @@ class Plugmixer
           @syncing = false
           syncedPlaylist.lastSynced = Date.now()
           Youtube.save()
-          Interface.updatePlaylists()
 
         else if Object.keys(youtubePlaylistItems).length > 0
           # Deleting extra items from YouTube. We will add the new items next time.
@@ -859,11 +832,9 @@ Plugmixer.start()
 
 # Google Analytics
 if TRACKING_CODE?
+  `(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
   `
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  `
-else
-  window.ga = ->
+else window.ga = ->
