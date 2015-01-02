@@ -26,11 +26,12 @@ class Plugmixer
     Playlists.loadAfter WindowMessageListener, Interface, User
     Room.loadAfter WindowMessageListener, Playlists
     Selections.loadAfter WindowMessageListener, Interface, User, Room
+    Sync.loadAfter WindowMessageListener, Playlists
+    Youtube.loadAfter Sync
     ApiListener.loadAfter Room
 
     WindowMessageListener.initialize()
     Interface.initialize()
-    Youtube.preInitialize()
 
     if TRACKING_CODE?
       ga 'create', TRACKING_CODE, 'auto', name: 'plugmixer'
@@ -164,7 +165,7 @@ class Plugmixer
               User.load data.response
             when 'room' then Room.load data.response # Should only happen once.
             when 'selections' then Selections.load data.response
-            when 'playlists' then Youtube.update data.response
+            when 'sync' then Sync.load data.response
 
       @done()
 
@@ -332,22 +333,17 @@ class Plugmixer
       return playlists.filter((playlist) -> return playlist.id.toString() == id.toString())[0]
 
     @refreshIfRequired: ->
-      refresh = playlists.some (playlist) -> return playlist.dom.parent().length == 0
-      if refresh then refreshPlaylists @getEnabledNames
+      if (playlists.some (playlist) -> return playlist.dom.parent().length == 0)
+        API.getPlaylists (_playlists) =>
+          _playlists.forEach (_playlist) ->
+            oldPlaylist = playlists.filter((playlist) -> return playlist.id == _playlist.id)[0]
+            if oldPlaylist? then oldPlaylist.refresh _playlist
+            else playlists.push new Playlist(_playlist)
 
-    refreshPlaylists = (playlistNames) =>
-      API.getPlaylists (_playlists) =>
-        playlists.forEach (playlist) ->
-          newPlaylist = _playlists.filter((_playlist) -> return _playlist.id == playlist.id)[0]
-          if newPlaylist?
-            playlist.refresh newPlaylist
-            _playlists.splice _playlists.indexOf(newPlaylist), 1
-          else playlist.remove()
+          playlists.forEach (playlist) ->
+            if playlist.dom.parent().length == 0 then playlist.remove()
 
-        _playlists.forEach (_playlist) ->
-          playlists.push new Playlist(_playlist)
-
-        Selections.Card.update()
+          Selections.Card.update()
 
     @update: (playlistNames) ->
       @refreshIfRequired()
@@ -384,13 +380,6 @@ class Plugmixer
 
     @remove: (playlist) -> playlists.splice playlists.indexOf(playlist), 1
 
-    class Card
-      @initialize: ->
-
-      @update: ->
-
-    @Card = Card
-
     ###
     # Playlist object.
     ###
@@ -407,12 +396,11 @@ class Plugmixer
         @name = playlist.name
         @enabled = false
         @id = playlist.id
-        @youtube = null
 
         @li = $('#plugmixer-playlist-sample').clone().removeAttr('id').addClass 'plugmixer-playlist'
         @li.children('.plugmixer-playlist-name').text @name
         @li.attr 'id', "plugmixer-playlist-#{playlist.id}"
-        # @li.click (event) => Youtube.syncPlaylist @id
+        @li.click (event) => @sync()
 
         @registerMouseup()
         if @enabled then @enable() else @disable()
@@ -425,6 +413,27 @@ class Plugmixer
         @name = updatedPlaylist.name
         @li.children('.plugmixer-playlist-name').text @name
         if @enabled then @enable() else @disable()
+
+      sync: -> Sync.playlist @id
+
+      timestampToAgo = (timestamp) ->
+        if !timestamp? then return 'long ago'
+        diff = (Date.now() - timestamp) / 1000      # Difference in seconds.
+        if diff < 60                                # Within 60 seconds / 1 minute.
+          return 'just'
+        else if diff < 60 * 60                      # Within 60 minutes / 1 hour.
+          minutes = parseInt(diff / 60)
+          return "#{minutes}m ago"
+        else if diff < 60 * 60 * 24                 # Within 24 hours / 1 day.
+          hours = parseInt(diff / (60 * 60))
+          return "#{hours}h ago"
+        else                                        # More than 1 day.
+          days = parseInt(diff / (60 * 60 * 24))
+          return "#{days}d ago"
+
+      updateSyncStatus: (syncStatus) ->
+        @li.addClass 'plugmixer-playlist-synced'
+        @li.children('.plugmixer-playlist-syncinfo').text timestampToAgo(syncStatus.lastSynced)
 
       registerMouseup: ->
         @dom.children(SPAN_COUNT).unbind 'mouseup'
@@ -444,12 +453,12 @@ class Plugmixer
       disable: ->
         @enabled = false
         @dom.fadeTo FADE_DURATION, FADE_OPACITY
-        @li.fadeTo FADE_DURATION, FADE_OPACITY
+        # @li.fadeTo FADE_DURATION, FADE_OPACITY
 
       enable: ->
         @enabled = true
         @dom.fadeTo FADE_DURATION, 1
-        @li.fadeTo FADE_DURATION, 1
+        # @li.fadeTo FADE_DURATION, 1
 
       toggle: ->
         if @enabled
@@ -482,6 +491,8 @@ class Plugmixer
     CLASS_IN_USE        = 'plugmixer-in-use'
     SCROLL_OFFSET       = 40
 
+    @currentCard = '#plugmixer-main'
+
     @initialize: ->
       $.get DIV_HTML_SRC, (divHtml) =>
         $('#room').append divHtml
@@ -506,6 +517,7 @@ class Plugmixer
         @done()
 
     @switchToCard = (card) ->
+      @currentCard = card
       $('.plugmixer-card').removeClass('plugmixer-flip-in').addClass 'plugmixer-flip-out'
       $(card).removeClass('plugmixer-flip-out').addClass 'plugmixer-flip-in'
 
@@ -525,20 +537,6 @@ class Plugmixer
         ga 'plugmixer.send', 'event', 'main', 'click', 'expand'
       else
         ga 'plugmixer.send', 'event', 'main', 'click', 'collapse'
-
-    timestampToAgo = (timestamp) ->
-      diff = (Date.now() - timestamp) / 1000      # Difference in seconds.
-      if diff < 60                                # Within 60 seconds / 1 minute.
-        return 'just now'
-      else if diff < 60 * 60                      # Within 60 minutes / 1 hour.
-        minutes = parseInt(diff / 60)
-        return "#{minutes} minute#{minutes != 1 ? 's'} ago"
-      else if diff < 60 * 60 * 24                 # Within 24 hours / 1 day.
-        hours = parseInt(diff / (60 * 60))
-        return "#{hours} hour#{hours != 1 ? 's'} ago"
-      else                                        # More than 1 day.
-        days = parseInt(diff / (60 * 60 * 24))
-        return "#{days} day#{days != 1 ? 's'} ago"
 
 
   ###
@@ -647,17 +645,76 @@ class Plugmixer
 
 
   ###
+  # Playlist syncing.
+  #   Playlist ids are used as the key for storage of synced playlists.
+  ###
+  class Sync extends Component
+    syncedPlaylists = {}
+
+    @initialize: -> Storage.load 'sync', User.id
+
+    @load: (response) -> # Response is object containing synced playlists.
+      syncedPlaylists = response || {}
+      @refresh()
+      @done()
+
+    @save: ->
+      Storage.save 'sync', User.id, syncedPlaylists
+      @refresh()
+
+    @refresh: ->
+      Playlists.all()
+        .filter (playlist) -> return Object.keys(syncedPlaylists).indexOf(playlist.id.toString()) > -1
+        .forEach (playlist) -> playlist.updateSyncStatus(syncedPlaylists[playlist.id])
+
+    @add: (plugPlaylistId, ytPlaylistId) ->
+      syncedPlaylists[plugPlaylistId] = 
+        youtube: ytPlaylistId
+        ignore: []
+        lastSynced: null
+      @save()
+      return syncedPlaylists[plugPlaylistId]
+
+    @hasPlaylist: (plugPlaylistId) -> return Object.keys(syncedPlaylists).indexOf(plugPlaylistId) > -1
+
+    @playlist: (plugPlaylistId) ->
+      return if !Youtube.login
+      if Object.keys(syncedPlaylists).indexOf(plugPlaylistId.toString()) > -1
+        Youtube.sync plugPlaylistId, syncedPlaylists[plugPlaylistId]
+      else
+        Youtube.newSync plugPlaylistId, Playlists.getById(plugPlaylistId)
+
+    @link: (plugPlaylistId, ytPlaylistId) ->
+      if Playlists.getById(plugPlaylistId)?
+        if !syncedPlaylists[plugPlaylistId]? 
+          syncedPlaylists[plugPlaylistId] = 
+            youtube: ytPlaylistId
+            ignore: []
+            lastSynced: null
+        else
+          syncedPlaylists[plugPlaylistId].youtube = ytPlaylistId
+
+
+  ###
   # YouTube sync.
   ###
-  class Youtube
+  class Youtube extends Component
     OAUTH2_SCOPES = ['https://www.googleapis.com/auth/youtube']
     OAUTH2_CLIENT_ID = null
-    playlists = {}
     @login = false
+    @syncing = false
 
-    window.googleApiClientReady = ->
-      gapi.auth.init ->
-        window.setTimeout checkAuth, 1
+    @initialize: ->
+      if YOUTUBE_OAUTH2_CLIENT_ID? then load YOUTUBE_OAUTH2_CLIENT_ID
+      else
+        $.getJSON 'https://localhost:8080/core/youtube.json', (data) => load data.CLIENT_ID
+
+    load = (clientId) ->
+      OAUTH2_CLIENT_ID = clientId
+      if not gapi?
+        $.getScript 'https://apis.google.com/js/client.js?onload=googleApiClientReady'
+
+    window.googleApiClientReady = -> gapi.auth.init -> window.setTimeout checkAuth, 1
 
     checkAuth = (immediate = true) ->
       gapi.auth.authorize
@@ -666,133 +723,116 @@ class Plugmixer
         immediate: immediate
       , handleAuthResult
 
+      if !immediate
+        ga 'plugmixer.send', 'event', 'sync', 'click', 'login-youtube'
+
     handleAuthResult = (authResult) ->
-      if authResult and not authResult.error
-        loadAPIClientInterfaces()
+      if authResult and not authResult.error 
+        gapi.client.load 'youtube', 'v3', -> readPlaylists()
       else
-        $('#plugmixer-youtube-login').click (event) ->
-          checkAuth(false)
+        $('#plugmixer-youtube-login').click (event) -> checkAuth false
 
-    loadAPIClientInterfaces = ->
-      gapi.client.load 'youtube', 'v3', ->
-        Youtube.postInitialize()
+    readPlaylists = (nextPageToken) ->
+      extractPlugPlaylistId = (description) ->
+        regex = /plug\.dj \((\d+)\)/g
+        match = regex.exec(description)
+        if match? then return match[1] else return -1
 
-    # Load client id first, then stored data, then Google API.
-    @preInitialize: ->
-      if YOUTUBE_OAUTH2_CLIENT_ID?
-        OAUTH2_CLIENT_ID = YOUTUBE_OAUTH2_CLIENT_ID
-        @initialize()
-      else
-        $.getJSON 'https://localhost:8080/core/youtube.json', (data) =>
-          OAUTH2_CLIENT_ID = data.CLIENT_ID
-          @initialize()
+      request = gapi.client.youtube.playlists.list
+        part: 'snippet'
+        maxResults: 50
+        pageToken: nextPageToken
+        mine: true
+        fields: 'items(id,snippet/description),nextPageToken'
+      request.execute (response) ->
+        if !response.result? then return console.debug response
 
-    @initialize: ->
-      Storage.load 'playlists', User.id
+        response.result.items.forEach (ytPlaylist) ->
+          plugPlaylistId = extractPlugPlaylistId ytPlaylist.snippet.description
+          if plugPlaylistId != -1 then Sync.link plugPlaylistId, ytPlaylist.id
 
-    @update: (response) -> # Response is array of synced playlists.
-      playlists = response || {}
-      if not gapi?
-        $.getScript 'https://apis.google.com/js/client.js?onload=googleApiClientReady'
+        if response.nextPageToken then readPlaylists response.nextPageToken
+        else ready()
 
-    @save: ->
-      Storage.save 'playlists', User.id, playlists
-
-    @postInitialize: ->
+    ready = =>
+      Sync.save()
       @login = true
-      Interface.switchToCard '#plugmixer-sync'
+      Interface.switchToCard '#plugmixer-sync' if Interface.currentCard == '#plugmixer-login'
+      @done()
 
-    getYoutubePlaylistId = (playlist, callback) ->
-      if playlists.hasOwnProperty playlist.id
-        callback playlists[playlist.id]
-      else # Create a YouTube playlist.
-        request = gapi.client.youtube.playlists.insert
-          part: 'snippet, status'
-          resource:
-            snippet:
-              title: playlist.name
-              description: "#{playlist.name} from plug.dj (#{playlist.id})"
-            status:
-              privacyStatus: 'private'
-        request.execute (response) =>
-          result = response.result
-          if !result? then return console.debug response
-          playlists[playlist.id] = 
-            youtube: result.id
-            ignore: []
-            lastSynced: null
-          Youtube.save()
-          callback playlists[playlist.id]
+    @setSyncing: (status) ->
+      @syncing = status
+      if @syncing then # disable
+      else #enable
 
-    @syncPlaylist: (id) ->
-      playlist = Playlists.getById id
-      getYoutubePlaylistId playlist, (syncedPlaylist) ->
-        Sync.run playlist, syncedPlaylist
-          
-    @getIfSync: (id) ->
-      if Object.keys(playlists).indexOf(id) > -1 then return playlists[id] else null
+    @newSync: (plugPlaylistId, plugPlaylist) ->
+      return if @syncing
+      @setSyncing true
+      request = gapi.client.youtube.playlists.insert
+        part: 'snippet,status'
+        resource:
+          snippet:
+            title: plugPlaylist.name
+            description: "#{plugPlaylist.name} from plug.dj (#{plugPlaylistId})"
+          status:
+            privacyStatus: 'private'
+      request.execute (response) =>
+        if !response.result? then return console.debug response
+        syncedPlaylist = Sync.add plugPlaylistId, response.result.id
+        @setSyncing false
+        @sync plugPlaylistId, syncedPlaylist
 
-    class Sync
-      @syncing = false
+    @sync: (plugPlaylistId, syncedPlaylist) ->
+      return if @syncing
+      @setSyncing true
+
       media = []
       youtubePlaylistItems = {}
-      playlist = {}
-      syncedPlaylist = null
+      totalItemCount = remainingCount = 0
 
-      @run: (_playlist, _syncedPlaylist) ->
-        return if @syncing
-        @syncing = true
-        playlist = _playlist
-        syncedPlaylist = _syncedPlaylist
-        API.getPlaylistMedia playlist.id, (_media) ->
-          media = _media.filter (m) ->
-            return m.format == 1 and m.cid.length == 11 and syncedPlaylist.ignore.indexOf(m.id) == -1      
-          getYoutubePlaylist _syncedPlaylist
-
-      getYoutubePlaylist = (_syncedPlaylist, _pageToken) ->
+      getYoutubePlaylist = (nextPageToken) ->
         request = gapi.client.youtube.playlistItems.list
           part: 'snippet'
           maxResults: 50
-          pageToken: _pageToken
-          playlistId: _syncedPlaylist.youtube
-          fields: 'items(id,snippet/publishedAt,snippet/resourceId),nextPageToken,prevPageToken'
+          pageToken: nextPageToken
+          playlistId: syncedPlaylist.youtube
+          fields: 'items(id,snippet/publishedAt,snippet/resourceId),nextPageToken'
         request.execute (response) ->
-          result = response.result
-          if !result? then return console.log response
-          result.items.forEach (item) -> 
+          if !response.result? then return console.debug response
+          response.result.items.forEach (item) -> 
             if item.snippet.resourceId.kind == 'youtube#video'
               videoId = item.snippet.resourceId.videoId
               youtubePlaylistItems[videoId] =
                 playlistItemId: item.id
                 added: item.snippet.publishedAt
 
-          if response.nextPageToken
-            getYoutubePlaylist _syncedPlaylist, response.nextPageToken
+          if response.nextPageToken then getYoutubePlaylist response.nextPageToken
           else
-            diff()
-
-      diff = =>
+            process()
+            runSync()
+      
+      process = =>
         videoIds = Object.keys(youtubePlaylistItems)
         media = media.filter (m) ->
-          index = videoIds.indexOf(m.cid)
-          if index > -1
+          if videoIds.indexOf(m.cid) > -1 # Remove from media and youtubePlaylistItems if common.
             delete youtubePlaylistItems[m.cid]
             return false
           else
             return true
-        $("#plugmixer-playlist-#{playlist.id}")
-          .removeClass('plugmixer-playlist-synced')
-          .addClass('plugmixer-playlist-syncing')
-        sync()
 
-      sync = =>
-        $("#plugmixer-playlist-#{playlist.id}")
-          .children('.plugmixer-playlist-syncinfo').text "#{media.length}/#{playlist.count()}" 
+        totalItemCount = media.length + Object.keys(youtubePlaylistItems).length
+        ga 'plugmixer.send', 'event', 'sync', 'click', 'youtube', totalItemCount
+
+      runSync = =>
+        remainingCount++
+        $("#plugmixer-playlist-#{plugPlaylistId}")
+          .children('.plugmixer-playlist-syncinfo').text "#{remainingCount}/#{totalItemCount}" 
+
         if media.length <= 0 && Object.keys(youtubePlaylistItems).length <= 0
           $('.plugmixer-playlist').removeClass('plugmixer-playlist-syncing')
-          @syncing = false
           syncedPlaylist.lastSynced = Date.now()
-          Youtube.save()
+          Sync.save()
+          @setSyncing false
 
         else if Object.keys(youtubePlaylistItems).length > 0
           # Deleting extra items from YouTube. We will add the new items next time.
@@ -803,14 +843,14 @@ class Plugmixer
           request.execute (response) =>
             delete youtubePlaylistItems[videoId]
             result = response.result
-            if !result? then console.log response # What can go wrong?
-            sync()
+            if !result? then console.debug response # What can go wrong?
+            runSync()
 
         else
           # Sync missing items to YouTube.
           m = media[0]
           request = gapi.client.youtube.playlistItems.insert
-            part: 'snippet, contentDetails'
+            part: 'snippet,contentDetails'
             resource:
               snippet:
                 playlistId: syncedPlaylist.youtube
@@ -821,13 +861,22 @@ class Plugmixer
                 note: "#{m.author} - #{m.title}"
           request.execute (response) =>
             media.splice 0, 1
-            result = response.result
-            if !result? # Something went wrong,
-              syncedPlaylist.ignore.push m.id
-            sync()
+            if !response.result? then syncedPlaylist.ignore.push m.id # Unable to add.
+            runSync()
+
+      API.getPlaylistMedia plugPlaylistId, (_media) ->
+        media = _media.filter (m) ->
+          return m.format == 1 and m.cid.length == 11 and syncedPlaylist.ignore.indexOf(m.id) == -1
+        getYoutubePlaylist()
+
+        $("#plugmixer-playlist-#{plugPlaylistId}")
+          .children('.plugmixer-playlist-syncinfo').text ''
+        $("#plugmixer-playlist-#{plugPlaylistId}")
+          .removeClass('plugmixer-playlist-synced')
+          .addClass('plugmixer-playlist-syncing')
 
 
-console.log 'plugmixer.js loaded'
+console.log 'Plugmixer loaded!'
 Plugmixer.start()
 
 # Google Analytics

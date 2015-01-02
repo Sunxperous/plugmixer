@@ -2,7 +2,7 @@
 
 'use strict'
 
-VERSION = "2.0.0"
+VERSION = "2.1.1"
 
 # Inject plugmixer.js.
 inject = document.createElement 'script'
@@ -32,12 +32,14 @@ class PlugmixerLocal
           when 'user' then loadUser data.id
           when 'room' then loadRoom data.id
           when 'selections' then loadSelections data.id
+          when 'sync' then loadSync data.id
             
       when 'save'
         switch data.type
           when 'user' then saveUser data.id, data.data
           when 'room' then saveRoom data.id, data.data
           when 'selection' then saveSelection data.id, data.data
+          when 'sync' then saveSync data.id, data.data
 
       when 'remove'
         switch data.type
@@ -167,4 +169,17 @@ class PlugmixerLocal
     remove timestamp
 
 
-  console.log 'plugmixer_local.js loaded'
+  ###
+  # Loads the synced playlists of user 'id'.
+  # User should have already been loaded before.
+  ###
+  loadSync = (id) ->
+    load 'sync', (sync) ->
+      respond 'sync', sync
+
+  ###
+  # Saves the synced playlists with the following attributes:
+  #   [ { plugId: "", ytId: "" }, ... ]
+  ###
+  saveSync = (id, data) ->
+    save 'sync', data
