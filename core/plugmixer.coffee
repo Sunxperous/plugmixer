@@ -24,8 +24,8 @@ class Plugmixer
   initialize = ->
     User.loadAfter WindowMessageListener
     Playlists.loadAfter WindowMessageListener, Interface, User
-    Room.loadAfter WindowMessageListener, Playlists
-    Selections.loadAfter WindowMessageListener, Interface, User, Room
+    Selections.loadAfter WindowMessageListener, Interface, User
+    Room.loadAfter WindowMessageListener, Playlists, Selections
     Sync.loadAfter WindowMessageListener, Playlists
     Youtube.loadAfter Sync
     ApiListener.loadAfter Room
@@ -354,6 +354,8 @@ class Plugmixer
         if enable then playlist.enable() else playlist.disable()
 
       if not @getActivated().enabled then @activateAnother()
+
+      Selections.Card.update()
 
     @activateAnother: (playlist) ->
       return if playlist? and playlist != activePlaylist # Do nothing if not the same playlist.

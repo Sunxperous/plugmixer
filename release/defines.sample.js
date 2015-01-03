@@ -5,3 +5,4 @@ const PLUGMIXER_CORE = 'https://.../';
 const EXTEND_API = 'https://.../';
 const PLUGMIXER_HTML = 'https://.../';
 const TRACKING_CODE = 'UA-XXXXXXXX-X';
+const YOUTUBE_OAUTH2_CLIENT_ID = '';
