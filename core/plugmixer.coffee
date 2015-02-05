@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.0"
-HTML_VERSION = "2.1.0"
+VERSION = "2.1.1"
+HTML_VERSION = "2.1.1"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -108,6 +108,8 @@ class Plugmixer
 
       ga 'plugmixer.set', page: API.getRoom().path, title: API.getRoom().name
       ga 'plugmixer.send', 'pageview'
+
+      Interface.updateStatus()
 
       @done()
 
