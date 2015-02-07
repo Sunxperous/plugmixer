@@ -18,7 +18,7 @@ Use `http-server -S` to serve files over HTTPS.
 
 ## Extended plug.dj API
 
-The [script `core/extendAPI.js`](core/extendAPI.js) for extending the current plug.dj API is currently hosted [here](https://561967430f325bd7b958c5fc08fd709b26297f3f-www.googledrive.com/host/0ByHWCSTdXEMLU20yR1RkTDRYZFk/).
+The [script `core/extendAPI.js`](core/extendAPI.js) for extending the current plug.dj API is currently hosted [here](https://plugmixer-serve.sunwj.com/extendAPI.js).
 
 ### Extended API constants and methods
 

@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.1"
-HTML_VERSION = "2.1.1"
+VERSION = "2.1.2"
+HTML_VERSION = "2.1.2"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512

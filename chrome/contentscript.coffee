@@ -2,7 +2,7 @@
 
 'use strict'
 
-VERSION = "2.1.1"
+VERSION = "2.1.2"
 
 # Inject plugmixer.js.
 inject = document.createElement 'script'

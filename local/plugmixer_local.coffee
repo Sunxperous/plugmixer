@@ -2,7 +2,7 @@
 
 'use strict'
 
-VERSION = "2.1.0"
+VERSION = "2.1.2"
 
 # Inject plugmixer.js
 $.getScript PLUGMIXER_CORE

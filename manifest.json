@@ -5,7 +5,7 @@
   "short_name": "Plugmixer",
   "description": "Playlist management for plug.dj!",
   "author": "Sun Wang Jun",
-  "version": "2.1.1",
+  "version": "2.1.2",
 
   "permissions": [
     "https://plug.dj/",
@@ -23,7 +23,7 @@
   ],
   "web_accessible_resources": [
   ],
-  "content_security_policy": "script-src 'self' https://localhost:8080 https://*.googledrive.com/ https://www.google-analytics.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' https://localhost:8080 https://*.sunwj.com/ https://www.google-analytics.com; object-src 'self'",
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
