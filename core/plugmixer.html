@@ -7,7 +7,7 @@
       left: 4px;
       width: 320px;
       font-family: 'Open Sans', sans-serif;
-      color: #333;
+      color: #666;
       border-radius: 4px;
       z-index: 17;
       transition: all 0.5s ease-out;
@@ -154,7 +154,7 @@
     #plugmixer-expanded {
       width: 320px;
       transition: all 0.5s ease-out;
-      color: #ccc;
+      color: #666;
       background-color: rgba(0, 0, 0, 0.85);
       opacity: 1;
       position: relative;
@@ -331,11 +331,46 @@
       white-space: normal;
     }
 
-    .plugmixer-selection-actions, .plugmixer-playlist-actions {
+    .plugmixer-playlist-actions {
       margin-top: 4px;
-      text-transform: uppercase;
       text-align: right;
+      text-transform: uppercase;
       font-size: 10px;
+    }
+
+    .plugmixer-selection-actions {
+      margin-top: 4px;
+      height: 18px;
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0);
+      border-radius: 8px;
+      transition: all 0.3s ease-out;
+    }
+    .plugmixer-selection:hover .plugmixer-selection-actions,
+    .plugmixer-in-use .plugmixer-selection-actions {
+      background-color: rgba(255, 255, 255, 1);
+      transition: all 0.3s ease-out;
+    }
+
+    .plugmixer-selection-button {
+      height: 16px;
+      width: 16px;
+      margin: 0 16px; 
+      display: inline-block;
+      background-image: url("https://9d0ce8c81b1e2423dea115e71d3535ddec859e04-www.googledrive.com/host/0ByHWCSTdXEMLV0ViQkR5THF0UDQ");
+      background-size: auto 16px;
+    }
+    .plugmixer-selection-playonly {
+      background-position: 0 0;
+    }
+    .plugmixer-selection-enable {
+      background-position: -16px 0;
+    }
+    .plugmixer-selection-disable {
+      background-position: -32px 0;
+    }
+    .plugmixer-selection-delete {
+      background-position: -48px 0;
     }
 
     #plugmixer-input {
@@ -477,6 +512,10 @@
       cursor: pointer;
     }
 
+    #plugmixer-message {
+      cursor: pointer;
+    }
+
   </style>
   <div id="plugmixer-bar">
     <img id="plugmixer-logo" src="https://fd1125f1ed4dea4dc643da4564541297246a660f-www.googledrive.com/host/0ByHWCSTdXEMLZnBibmRpNWdvc2M/?v=2.0.2">
@@ -508,14 +547,17 @@
           <input type="text" id="plugmixer-input" class="plugmixer-selection-name" placeholder="Name of group">
           <div class="plugmixer-selection-playlists"></div>
           <div class="plugmixer-selection-actions">
-            <span id="plugmixer-selection-cancel">Cancel</span>
+            <i id="plugmixer-selection-cancel" class="plugmixer-selection-button plugmixer-selection-disable"></i>
           </div>
         </div>
         <li id="plugmixer-selection-sample">
           <div class="plugmixer-selection-name"></div>
           <div class="plugmixer-selection-playlists"></div>
           <div class="plugmixer-selection-actions">
-            <span class="plugmixer-selection-delete">Delete</span>
+            <i class="plugmixer-selection-button plugmixer-selection-playonly" title="play only"></i>
+            <i class="plugmixer-selection-button plugmixer-selection-enable" title="enable"></i>
+            <i class="plugmixer-selection-button plugmixer-selection-disable" title="disable"></i>
+            <i class="plugmixer-selection-button plugmixer-selection-delete" title="delete"></i>
           </div>
         </li>
       </ul>
@@ -546,6 +588,7 @@
       </ul>
     </div>
     <div id="plugmixer-footer">
+      <a id="plugmixer-message"></a>
       <span data-card="plugmixer-main" class="plugmixer-card-link">playlist groups</span>
       <span data-card="plugmixer-youtube" class="plugmixer-card-link">try youtube sync</span>
     </div>

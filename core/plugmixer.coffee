@@ -5,6 +5,7 @@
 
 VERSION = "2.1.3"
 HTML_VERSION = "2.1.3"
+DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -281,7 +282,7 @@ class Plugmixer
 
           Selections.Card.update()
 
-    @update: (playlistNames) ->
+    @playOnly: (playlistNames) ->
       @refreshIfRequired()
       playlists.forEach (playlist) ->
         enable = false
@@ -290,6 +291,30 @@ class Plugmixer
         if enable then playlist.enable() else playlist.disable()
 
       if not @getActivated().enabled then @activateAnother()
+
+      Selections.Card.update()
+
+    @update = @playOnly
+
+    @enable: (playlistNames) ->
+      @refreshIfRequired()
+      playlists.forEach (playlist) ->
+        enable = false
+        for playlistName in playlistNames
+          if playlist.name == playlistName then playlist.enable()
+
+      # if not @getActivated().enabled then @activateAnother() # Don't have to activate another, cause we are enabling more.
+
+      Selections.Card.update()
+
+    @disable: (playlistNames) ->
+      @refreshIfRequired()
+      playlists.forEach (playlist) ->
+        enable = false
+        for playlistName in playlistNames
+          if playlist.name == playlistName then playlist.disable()
+
+      if not @getActivated().enabled then @activateAnother() # Activate another cause we might disable the current one.
 
       Selections.Card.update()
 
@@ -451,6 +476,27 @@ class Plugmixer
               else
                 @switchToCard '#plugmixer-login'
 
+        currDate = new Date()
+        if DATE_OF_BIRTH.getMonth() == currDate.getMonth() and # If February, and
+          DATE_OF_BIRTH.getDate() <= currDate.getDay() # after 24th February...
+            $('#plugmixer-message').text "plugmixer is #{currDate.getYear() - DATE_OF_BIRTH.getYear()}, yay!"
+            $('#plugmixer-message').css 'color', '#f03f20'
+            $('#plugmixer-message').click (event) =>
+              ga 'plugmixer.send', 'event', 'footer', 'click', 'birthday'
+            $('#plugmixer-message').attr 'target', '_blank'
+            $('#plugmixer-message').attr 'href', 'https://plugmixer.sunwj.com'
+        else if currDate.getMonth() % 2 == 0
+          $('#plugmixer-message').text "rate plugmixer"
+          $('#plugmixer-message').click (event) =>
+            ga 'plugmixer.send', 'event', 'footer', 'click', 'rate'
+          $('#plugmixer-message').attr 'target', '_blank'
+          $('#plugmixer-message').attr 'href', 'https://chrome.google.com/webstore/detail/plugmixer/bnfboihohdckgijdkplinpflifbbfmhm/reviews'
+        else if currDate.getMonth() % 2 == 1
+          $('#plugmixer-message').text "share plugmixer"
+          $('#plugmixer-message').click (event) =>
+            ga 'plugmixer.send', 'event', 'footer', 'click', 'share'
+            API.sendChat 'Plugmixer: Playlist management for plug.dj! https://plugmixer.sunwj.com'
+
         @updateStatus()
         @done()
 
@@ -505,7 +551,7 @@ class Plugmixer
       list[timestamp] = new Selection(timestamp, name, selection)
 
       list[timestamp].save()
-      list[timestamp].use()
+      list[timestamp].playOnly()
       User.save()
 
       return list[timestamp]
@@ -549,10 +595,18 @@ class Plugmixer
         @li.children('.plugmixer-selection-playlists').text @playlists.join(', ')
 
         @li.click (event) =>
-          if event.target.className == 'plugmixer-selection-delete'
+          if event.target.className.match('plugmixer-selection-delete') != null
+            ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
             @remove()
+          else if event.target.className.match('plugmixer-selection-enable') != null
+            ga 'plugmixer.send', 'event', 'group', 'click', 'enable'
+            @enable()
+          else if event.target.className.match('plugmixer-selection-disable') != null
+            ga 'plugmixer.send', 'event', 'group', 'click', 'disable'
+            @disable()
           else
-            @use()
+            ga 'plugmixer.send', 'event', 'group', 'click', 'use'
+            @playOnly()
 
         $('#plugmixer-new-selection').after @li
 
@@ -562,9 +616,18 @@ class Plugmixer
         Storage.save 'selection', @timestamp, data
 
       scan: (activePlaylists) ->
-        same = $(@playlists).not(activePlaylists).length == 0 and
-          $(activePlaylists).not(@playlists).length == 0 # jQuery array comparison.
+        same = $(@playlists).not(activePlaylists).length == 0
         if same then @li.addClass 'plugmixer-in-use' else @li.removeClass 'plugmixer-in-use'
+
+      enable: ->
+        Playlists.enable @playlists
+        Room.save()
+        Card.update()
+
+      disable: ->
+        Playlists.disable @playlists
+        Room.save()
+        Card.update()
 
       remove: ->
         @li.addClass 'plugmixer-hide'
@@ -572,13 +635,11 @@ class Plugmixer
         User.save()
         Storage.remove 'selection', @timestamp
         setTimeout (=> @li.remove()), 5000
-        ga 'plugmixer.send', 'event', 'group', 'click', 'delete'
 
-      use: ->
-        Playlists.update @playlists
+      playOnly: ->
+        Playlists.playOnly @playlists
         Room.save()
         Card.update()
-        ga 'plugmixer.send', 'event', 'group', 'click', 'use'
 
 
   ###
