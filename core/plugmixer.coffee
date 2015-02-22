@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.2"
-HTML_VERSION = "2.1.2"
+VERSION = "2.1.3"
+HTML_VERSION = "2.1.3"
 
 class Plugmixer
   INITIALIZATION_TIMEOUT = 512
@@ -139,7 +139,7 @@ class Plugmixer
 
     @toggleActive: ->
       @active = if @active == 1 then 0 else 1
-      ga 'plugmixer.send', 'event', 'main', 'click', 'status', @active
+      ga 'plugmixer.send', 'event', 'main', 'click', if @active then 'on' else 'off'
       @save()
 
     @changedTo: (newRoom) ->
@@ -181,8 +181,6 @@ class Plugmixer
 
       Helper.PlaylistRefresh.initialize()
 
-      Helper.Effects.initialize()
-
       API.on API.ADVANCE, (data) ->
         Helper.TitleText.update()
         if data.dj? and data.dj.username == API.getUser().username
@@ -212,70 +210,6 @@ class Plugmixer
           Playlists.refreshIfRequired()
 
     @Effects: class Effects
-      # December 2014: Snow!
-      canvas = context = intervalId = null
-      intervalCount = 0
-      particles = []
-      NO_OF_FRAMES    = 180 # 3s, 60fps.
-      SIZE            = 6
-      MELT_RATE       = SIZE / NO_OF_FRAMES
-      Y_START         = 10
-      Y_ACC           = 4
-      Y_MIN_ACC       = 1
-      X_ACC           = 2
-      X_MIN_ACC       = -1 # Moving left.
-      X_MAX_VELOCITY  = 2
-      X_MIN_VELOCITY  = -2
-      SNOW_MIN_COUNT  = 20
-      SNOW_UPTO_COUNT = 40 - SNOW_MIN_COUNT
-
-      @initialize: ->
-        canvas = document.getElementById 'plugmixer-effects'   
-        return if not canvas.getContext
-        context = canvas.getContext '2d'     
-
-      @reset: ->
-        if canvas? and context?
-          clearInterval intervalId
-          intervalCount = 0
-
-        particles = []
-        for i in [1..Math.random() * SNOW_UPTO_COUNT + SNOW_MIN_COUNT]
-          particle =
-            size: Math.random() * SIZE
-            meltRate: MELT_RATE
-            x: Math.random() * canvas.width
-            xV: Math.random() * X_ACC + X_MIN_ACC
-            y: Y_START
-            yV: Math.random() * Y_ACC + Y_MIN_ACC
-            move: ->
-              @xV = Math.min Math.max(@xV + Math.random() * X_ACC + X_MIN_ACC, X_MIN_VELOCITY), X_MAX_VELOCITY
-              @x = @x + @xV
-              @y = @y + @yV
-              @size = Math.max @size - @meltRate, 0
-          particles.push particle
-
-      @draw: ->
-        return if not context?
-        @reset()
-
-        intervalId = setInterval(@play, 1000 / 60)
-
-      clear = ->
-        context.clearRect 0, 0, canvas.width, canvas.height
-
-      @play: ->
-        clear()
-        if ++intervalCount > NO_OF_FRAMES
-          clearInterval intervalId
-          intervalCount = 0
-        particles.forEach (particle) ->
-          particle.move()
-          context.beginPath()
-          context.arc particle.x, particle.y, particle.size, 2 * Math.PI, false
-          context.fillStyle = 'white'
-          context.fill()
-          context.closePath()
 
 
   ###
@@ -537,7 +471,6 @@ class Plugmixer
       if $('.' + CLASS_IN_USE).length > 0
         $('#plugmixer-selections').scrollTop $('.' + CLASS_IN_USE).position().top - SCROLL_OFFSET
       if not $('#plugmixer-expanded').hasClass CLASS_HIDE # If expanding...
-        Helper.Effects.draw()
         ga 'plugmixer.send', 'event', 'main', 'click', 'expand'
       else
         ga 'plugmixer.send', 'event', 'main', 'click', 'collapse'
