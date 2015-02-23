@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.3"
-HTML_VERSION = "2.1.3"
+VERSION = "2.1.4"
+HTML_VERSION = "2.1.4"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
@@ -192,6 +192,10 @@ class Plugmixer
 
       API.on API.PLAYLIST_ACTIVATE, (playlist) ->
         API.chatLog "Next playing from #{playlist.name}"
+
+      API.on API.GRAB_UPDATE, (data) ->
+        if data.user? and data.user.username == API.getUser().username
+          Playlists.refreshIfRequired()
 
       @done()
 
