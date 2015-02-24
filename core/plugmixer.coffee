@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.4"
-HTML_VERSION = "2.1.4"
+VERSION = "2.1.5"
+HTML_VERSION = "2.1.5"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
@@ -482,7 +482,7 @@ class Plugmixer
 
         currDate = new Date()
         if DATE_OF_BIRTH.getMonth() == currDate.getMonth() and # If February, and
-          DATE_OF_BIRTH.getDate() <= currDate.getDay() # after 24th February...
+          DATE_OF_BIRTH.getDate() <= currDate.getDate() # after 24th February...
             $('#plugmixer-message').text "plugmixer is #{currDate.getYear() - DATE_OF_BIRTH.getYear()}, yay!"
             $('#plugmixer-message').css 'color', '#f03f20'
             $('#plugmixer-message').click (event) =>

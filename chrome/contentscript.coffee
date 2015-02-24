@@ -2,7 +2,7 @@
 
 'use strict'
 
-VERSION = "2.1.2"
+VERSION = "2.1.5"
 
 # Inject plugmixer.js.
 inject = document.createElement 'script'
@@ -95,7 +95,7 @@ class PlugmixerLocal
     load '', (user) ->
       # Saves if user is new.
       if !user?
-        saveUser '', # Does not require id key for user.
+        save '', # Bypass saveUser, call save directly.
           favorites: []
           lastPlayedIn: 'default'
           selections: []
