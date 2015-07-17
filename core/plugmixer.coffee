@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.5"
-HTML_VERSION = "2.1.5"
+VERSION = "2.1.6"
+HTML_VERSION = "2.1.6"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
@@ -96,7 +96,8 @@ class Plugmixer
 
     @initialize: ->
       @id = API.getRoom().id
-      Storage.load 'room', idToUse(User.lastPlayedIn)
+      Storage.load 'room', @id
+      # Storage.load 'room', idToUse(User.lastPlayedIn)
 
     @load: (response) -> # Response is a Room data array.
       if !response? # Non-existing room...
@@ -136,7 +137,13 @@ class Plugmixer
       return User.lastPlayedIn
 
     @save: ->
-      Storage.save 'room', idToUse('default'), getStatus()
+      Storage.save 'room', @id, getStatus()
+      # Storage.save 'room', idToUse('default'), getStatus()
+
+      # Temporary workaround - favorites now includes all rooms visited regardless starred or not.
+      if User.favorites.indexOf(@id) < 0
+        User.favorites.unshift @id
+        User.save()
 
     @toggleActive: ->
       @active = if @active == 1 then 0 else 1
@@ -146,7 +153,8 @@ class Plugmixer
     @changedTo: (newRoom) ->
       return if !@id?
       @id = newRoom.id
-      Storage.load 'room', idToUse(User.lastPlayedIn)
+      Storage.load 'room', @id
+      # Storage.load 'room', idToUse(User.lastPlayedIn)
 
 
   ###
