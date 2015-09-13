@@ -1,3 +1,5 @@
+#!/bin/sh
+
 uglifyjs ./core/extendAPI.js -c -m -o ./release/extendAPI.js
 
 cp ./core/plugmixer.html ./release/plugmixer.html
