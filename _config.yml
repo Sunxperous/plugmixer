@@ -5,7 +5,7 @@ description: >
   Playlist management for plug.dj!
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://plugmixer.sunwj.com" # the base hostname & protocol for your site
-twitter_username: plugmixer
+twitter_username: sunxperous
 github_username: sunxperous
 github_repository: plugmixer
 
@@ -13,4 +13,4 @@ github_repository: plugmixer
 markdown: kramdown
 
 encoding: utf-8
-highlighter: rouge
+highlighter: pygments
