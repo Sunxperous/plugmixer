@@ -15,3 +15,5 @@ uglifyjs ./release/plugmixer_local.define.js ./chrome/contentscript.js -c -m -o 
 
 coffee -c ./chrome/background.coffee
 uglifyjs ./chrome/background.js -c -m -o ./chrome/background.js
+
+zip -r ./release/current/chrome.zip ./chrome/background.js ./chrome/contentscript.js ./chrome/popup.html ./images ./manifest.json
