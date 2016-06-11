@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.6"
-HTML_VERSION = "2.1.6"
+VERSION = "2.1.7"
+HTML_VERSION = "2.1.7"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
@@ -678,7 +678,7 @@ class Plugmixer
         .forEach (playlist) -> playlist.updateSyncStatus(syncedPlaylists[playlist.id])
 
     @add: (plugPlaylistId, ytPlaylistId) ->
-      syncedPlaylists[plugPlaylistId] = 
+      syncedPlaylists[plugPlaylistId] =
         youtube: ytPlaylistId
         ignore: []
         lastSynced: null
@@ -696,8 +696,8 @@ class Plugmixer
 
     @link: (plugPlaylistId, ytPlaylistId) ->
       if Playlists.getById(plugPlaylistId)?
-        if !syncedPlaylists[plugPlaylistId]? 
-          syncedPlaylists[plugPlaylistId] = 
+        if !syncedPlaylists[plugPlaylistId]?
+          syncedPlaylists[plugPlaylistId] =
             youtube: ytPlaylistId
             ignore: []
             lastSynced: null
@@ -737,7 +737,7 @@ class Plugmixer
         ga 'plugmixer.send', 'event', 'sync', 'click', 'login-youtube'
 
     handleAuthResult = (authResult) ->
-      if authResult and not authResult.error 
+      if authResult and not authResult.error
         gapi.client.load 'youtube', 'v3', -> readPlaylists()
       else
         $('#plugmixer-youtube-login').click (event) -> checkAuth false
@@ -809,7 +809,7 @@ class Plugmixer
           fields: 'items(id,snippet/publishedAt,snippet/resourceId),nextPageToken'
         request.execute (response) ->
           if !response.result? then return console.debug response
-          response.result.items.forEach (item) -> 
+          response.result.items.forEach (item) ->
             if item.snippet.resourceId.kind == 'youtube#video'
               videoId = item.snippet.resourceId.videoId
               youtubePlaylistItems[videoId] =
@@ -820,7 +820,7 @@ class Plugmixer
           else
             process()
             runSync()
-      
+
       process = =>
         videoIds = Object.keys(youtubePlaylistItems)
         media = media.filter (m) ->
@@ -836,7 +836,7 @@ class Plugmixer
       runSync = =>
         remainingCount++
         $("#plugmixer-playlist-#{plugPlaylistId}")
-          .children('.plugmixer-playlist-syncinfo').text "#{remainingCount}/#{totalItemCount}" 
+          .children('.plugmixer-playlist-syncinfo').text "#{remainingCount}/#{totalItemCount}"
 
         if media.length <= 0 && Object.keys(youtubePlaylistItems).length <= 0
           $('.plugmixer-playlist').removeClass('plugmixer-playlist-syncing')
@@ -864,7 +864,7 @@ class Plugmixer
             resource:
               snippet:
                 playlistId: syncedPlaylist.youtube
-                resourceId: 
+                resourceId:
                   kind: "youtube#video"
                   videoId: m.cid
               contentDetails:
