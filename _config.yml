@@ -13,4 +13,4 @@ github_repository: plugmixer
 markdown: kramdown
 
 encoding: utf-8
-highlighter: pygments
+highlighter: rouge 
