@@ -2,12 +2,13 @@ body {
   font-family: $base-font-family;
   text-align: center;
   color: $text-color;
+  padding-bottom: 32px;
 }
 
 main {
-  margin: 48px auto;
+  margin: 0 auto;
   max-width: 1024px;
-  padding: 24px;
+  padding: 16px;
 }
 
 a:active, a:link, a:hover, a:visited {
@@ -16,8 +17,7 @@ a:active, a:link, a:hover, a:visited {
 }
 
 header {
-  padding: 48px 0;
-  margin-bottom: 32px;
+  padding: 24px 0;
 }
 
 #logo {
@@ -54,9 +54,9 @@ ul {
 }
 
 .bar {
-  margin: 32px 0;
+  margin: 16px 0;
   display: block;
-  text-align: left;
+  text-align: center;
   > div {
     display: inline-block;
     vertical-align: middle;
@@ -64,8 +64,7 @@ ul {
 }
 
 .description {
-  padding: 24px;
-  max-width: 90%;
+  padding: 24px 0;
 }
 
 .caption {
@@ -79,4 +78,8 @@ ul {
     font-family: 'Consolas', monospace;
     font-size: 16px;
   }
+}
+
+.image {
+  margin: 16px auto;
 }
