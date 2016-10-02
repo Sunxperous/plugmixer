@@ -4,7 +4,7 @@
 'use strict'
 
 VERSION = "2.1.7"
-HTML_VERSION = "2.1.7"
+HTML_VERSION = "2.1.8"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
