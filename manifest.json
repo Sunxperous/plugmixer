@@ -5,7 +5,7 @@
   "short_name": "Plugmixer",
   "description": "Playlist management for plug.dj!",
   "author": "Sun Wang Jun",
-  "version": "2.2",
+  "version": "2.2.1",
 
   "permissions": [
     "https://plug.dj/",

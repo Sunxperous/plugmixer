@@ -22,13 +22,4 @@ chrome.notifications.onButtonClicked.addListener (notificationId, buttonIndex) -
 chrome.runtime.onInstalled.addListener (details) ->
   if details.previousVersion == '2.1.8'
     return
-  if details.reason == 'update'
-    chrome.notifications.create 'update',
-      type: 'basic',
-      iconUrl: 'images/icon128.png',
-      title: 'plug.dj is back',
-      message: 'Click here to dj with Plugmixer, then spread the word!',
-      buttons: [
-        title: 'Use Plugmixer on plug.dj now!'
-      ]
 
