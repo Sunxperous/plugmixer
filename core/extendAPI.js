@@ -1,6 +1,6 @@
 'use strict';
 
-var EXTEND_API_VERSION = '2.1.2';
+var EXTEND_API_VERSION = '2.1.3';
 
 (function extendAPI() {
 
@@ -32,13 +32,13 @@ var EXTEND_API_VERSION = '2.1.2';
 
     room.isRoom = true;
 
-    room.name = $('#room-name .bar-value').text();
+    room.name = ''; // Unused.
 
-    room.description = $('#room-info .description .value').text();
+    room.description = ''; // Unused.
 
-    room.welcomeMessage = $('#room-info .welcome .value').text();
+    room.welcomeMessage = ''; // Unused.
 
-    room.hostName = $('#room-host .username').text();
+    room.hostName = ''; // Removed in plug.dj 1.6.1.11924.
 
     return room;
 
@@ -66,12 +66,7 @@ var EXTEND_API_VERSION = '2.1.2';
     return function() {
       var room = API.getRoom();
 
-      if (room.isRoom && (room.hostName.length === 0
-        || room.hostName === '(waiting for host to login)')) {
-        setTimeout(onRoomChange(callback), 128);
-      }
-
-      else if (typeof(callback) === 'function') { callback(room); }
+      if (typeof(callback) === 'function') { callback(room); }
     }
   };
 
