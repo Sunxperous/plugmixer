@@ -3,8 +3,8 @@
 
 'use strict'
 
-VERSION = "2.1.9"
-HTML_VERSION = "2.1.8"
+VERSION = "2.2"
+HTML_VERSION = "2.2"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
 class Plugmixer
@@ -470,14 +470,15 @@ class Plugmixer
 
     @initialize: ->
       $.get DIV_HTML_SRC, (divHtml) =>
-        $('#room').append divHtml
+        $('.logo-wrapper').after divHtml
         $('#plugmixer-version').text 'v' + VERSION
 
-        $('#plugmixer-bar').click (event) =>
-          if event.target.offsetParent.id == 'plugmixer-status'
-            Room.toggleActive()
-            @updateStatus()
-          else toggleInterface()
+        $('#plugmixer-logo').click (event) =>
+          toggleInterface()
+
+        $('#plugmixer-status').click (event) =>
+          Room.toggleActive()
+          @updateStatus()
 
         $('.plugmixer-card-link').click (event) =>
           switch $(event.currentTarget).data 'card'
@@ -524,8 +525,6 @@ class Plugmixer
 
     toggleInterface = =>
       $('#plugmixer-expanded').toggleClass CLASS_HIDE
-      $('#plugmixer-dropdown-arrow').toggleClass 'plugmixer-rotate'
-      $('#plugmixer').toggleClass 'plugmixer-hover'
       if $('.' + CLASS_IN_USE).length > 0
         $('#plugmixer-selections').scrollTop $('.' + CLASS_IN_USE).position().top - SCROLL_OFFSET
       if not $('#plugmixer-expanded').hasClass CLASS_HIDE # If expanding...

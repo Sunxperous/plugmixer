@@ -1,32 +1,31 @@
-<div id="plugmixer" class="plugmixer-hover">
+<div id="plugmixer">
   <style type="text/css" scoped>
 
     #plugmixer {
-      position: absolute;
-      top: 59px;
-      left: 4px;
-      width: 320px;
+      display: inline-block;
       font-family: 'Open Sans', sans-serif;
       color: #666;
-      border-radius: 4px;
-      z-index: 17;
       transition: all 0.5s ease-out;
       white-space: nowrap;
-      border: 4px solid #fff;
-      overflow: hidden;
       font-size: 12px;
-      height: 65%;
       background: linear-gradient(to bottom, transparent 99%, #fff 10px);
     }
-    #plugmixer.plugmixer-hover {
-      height: 38px;
-      width: 38px;
-      border-color: transparent;
-      background: none;
+
+    #plugmixer-logo {
+      display: inline-block;
+      vertical-align: middle;
+      cursor: pointer;
+      padding-right: 8px;
+      transition: all 0.25s ease-out;
+      height: 24px;
+      width: 24px;
     }
-    #plugmixer.plugmixer-hover:hover {
-      width: 320px;
-      border-color: #fff;
+    #plugmixer-logo.plugmixer-desaturate {
+      -webkit-filter: grayscale(100%);
+      -moz-filter:    grayscale(100%);
+      -ms-filter:     grayscale(100%);
+      -o-filter:      grayscale(100%);
+      filter:         grayscale(100%);
     }
 
     #plugmixer a {
@@ -55,20 +54,13 @@
       transition: all 0.5s ease-out;
       background-color: rgba(255, 255, 255, 1);
     }
-    #plugmixer.plugmixer-hover #plugmixer-bar {
-      background: none;
-    }
-    #plugmixer.plugmixer-hover:hover #plugmixer-bar {
-      background-color: rgba(255, 255, 255, 1);
-    }
 
     #plugmixer-bar-text {
       display: inline-block;
       vertical-align: top;
-      padding: 6px 16px;
+      padding: 6px;
       height: 40px;
       line-height: 16px;
-      cursor: pointer;
       word-spacing: 1em;
       font-size: 10px;
       color: #999;
@@ -83,28 +75,13 @@
       display: block;
     }
 
-    #plugmixer-logo {
-      display: inline-block;
-      vertical-align: top;
-      cursor: pointer;
-      transition: all 0.25s ease-out;
-      height: 39px;
-      width: 39px;
-    }
-    #plugmixer-logo.plugmixer-desaturate {
-      -webkit-filter: grayscale(100%);
-      -moz-filter:    grayscale(100%);
-      -ms-filter:     grayscale(100%);
-      -o-filter:      grayscale(100%);
-      filter:         grayscale(100%); 
-    }
-
     #plugmixer-status {
       text-transform: lowercase;
       letter-spacing: 0.2em;
       display: inline-block;
-      position: relative;
-      padding: 0 24px;
+      position: absolute;
+      right: 0;
+      margin-right: 8px;
       width: 50px;
       height: 40px;
       line-height: 40px;
@@ -130,39 +107,21 @@
     #plugmixer-active.show { color: #6c6; top: 0; }
     #plugmixer-inactive.show { color: #c66; bottom: 0; }
 
-    #plugmixer-dropdown-arrow {
-      cursor: pointer;
-      position: absolute;
-      right: 16px;
-      top: 0;
-      font-size: 18px;
-      height: 40px;
-      line-height: 40px;
-      visibility: visible;
-      transition: visibility 0.25s linear, transform 0.25s linear;
-    }
-    #plugmixer.plugmixer-hover #plugmixer-dropdown-arrow {
-      visibility: hidden;
-      transition: visibility 0.25s linear, transform 0.25s linear;
-    }
-    #plugmixer.plugmixer-hover:hover #plugmixer-dropdown-arrow {
-      visibility: visible;
-      transition: visibility 0.25s linear 0.25s, transform 0.25s linear;
-    }
-    #plugmixer-dropdown-arrow.plugmixer-rotate {
-      transform: rotateX(180deg);
-    }
-
     #plugmixer-expanded {
+      z-index: 100;
       width: 320px;
       transition: all 0.5s ease-out;
       color: #666;
       background-color: rgba(0, 0, 0, 0.85);
       opacity: 1;
-      position: relative;
+      position: fixed;
+      margin-top: 16px;
       height: 100%;
+      max-height: 400px;
       visibility: visible;
       perspective: 960px;
+      border: 4px solid #fff;
+      border-radius: 8px;
     }
     #plugmixer-expanded.plugmixer-hide {
       opacity: 0;
@@ -211,20 +170,19 @@
 
     #plugmixer-actions {
       padding: 4px;
-      height: 28px;
       font-size: 10px;
       background-color: #f3f3f3;
       border-top: 2px solid #fff;
       z-index: 16;
       position: relative;
       width: 100%;
+      height: 40px;
     }
     /* [8px] [ 152 px ] [ 152 px ] [8px] */
 
     #plugmixer-info {
-      width: 152px;
+      width: 144px;
       display: inline-block;
-      margin-bottom: 4px;
       vertical-align: top;
     }
     #plugmixer-number {
@@ -252,6 +210,7 @@
 
     #plugmixer-action-button {
       display: inline-block;
+      margin-top: 2px;
       text-align: right;
       width: 152px;
     }
@@ -273,7 +232,7 @@
       color: #eee;
       overflow: auto;
       position: absolute;
-      width: 320px;
+      width: 100%;
       top: 36px;
       bottom: 67px;
       z-index: 15;
@@ -385,15 +344,14 @@
 
     #plugmixer-footer {
       padding: 7px 6px 5px 6px;
-      height: 16px;
       line-height: 16px;
       background-color: #fff;
       text-align: right;
       font-size: 10px;
       position: absolute;
       z-index: 16;
-      bottom: 40px;
-      width: 308px;
+      bottom: 0;
+      width: 100%;
     }
     #plugmixer-footer * {
       color: #666;
@@ -518,20 +476,19 @@
     }
 
   </style>
-  <div id="plugmixer-bar">
-    <img id="plugmixer-logo" src="https://plugmixer-serve.sunwj.com/images/icon48.png">
-    <div id="plugmixer-bar-text">
-      <span id="plugmixer-title">plugmixer</span>
-      <a href="https://plugmixer.sunwj.com" target="_blank" id="plugmixer-url">.sunwj.com</a>
-      <span id="plugmixer-version"></span>
-    </div>
-    <div id="plugmixer-status">
-      <div id="plugmixer-active">on</div>
-      <div id="plugmixer-inactive">off</div>
-    </div>
-    <div id="plugmixer-dropdown-arrow">&#9660;</div>
-  </div>
+  <img id="plugmixer-logo" src="https://plugmixer-serve.sunwj.com/images/icon48.png">
   <div id="plugmixer-expanded" class="plugmixer-hide">
+    <div id="plugmixer-bar">
+      <div id="plugmixer-bar-text">
+        <span id="plugmixer-title">plugmixer</span>
+        <a href="https://plugmixer.sunwj.com" target="_blank" id="plugmixer-url">.sunwj.com</a>
+        <span id="plugmixer-version"></span>
+      </div>
+      <div id="plugmixer-status">
+        <div id="plugmixer-active">on</div>
+        <div id="plugmixer-inactive">off</div>
+      </div>
+    </div>
     <canvas id="plugmixer-effects" width="320" height="400"></canvas>
     <div id="plugmixer-main" class="plugmixer-card plugmixer-flip-in">
       <div id="plugmixer-actions">
