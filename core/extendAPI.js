@@ -1,6 +1,6 @@
 'use strict';
 
-var EXTEND_API_VERSION = '2.1.3';
+var EXTEND_API_VERSION = '2.2.1';
 
 (function extendAPI() {
 
@@ -137,10 +137,11 @@ var EXTEND_API_VERSION = '2.1.3';
 
         playlist.name = playlist.$.children('span.name').text();
 
-        playlist.itemCount = parseInt(playlist.$.children('span.count').text());
+        var itemCountText = playlist.$.children('span.count').text();
+        playlist.itemCount = parseInt(itemCountText.substr(1, itemCountText.length - 2));
 
         playlist.active = playlist.$.children('.activate-button')
-          .children('i.icon').eq(0).hasClass('icon-check-purple');
+          .children('i.icon-playlist').eq(0).hasClass('active');
 
         return playlist;
 
@@ -202,7 +203,7 @@ var EXTEND_API_VERSION = '2.1.3';
       1, 0, 0, 0, 0, false, false, false, false, 0, null);
     jQ[0].dispatchEvent(mouseEvent);
 
-    jQ.children('.activate-button').click();
+    $('#playlist-activate-button').click();
   };
 
 
@@ -226,15 +227,15 @@ var EXTEND_API_VERSION = '2.1.3';
         setTimeout(onPlaylistActivate(playlistDom, tries + 1), 100);
       }
 
-      else if (playlistDom.find('.icon-check-purple').length > 0) {
+      else if (playlistDom.find('.active').length > 0) {
         API.trigger(API.PLAYLIST_ACTIVATE, API.getActivePlaylist());
       }
 
     }
   };
 
-  $(document).on('click', '.activate-button', function(event) {
-    onPlaylistActivate($(event.currentTarget).parent())();
+  $(document).on('click', '#playlist-activate-button', function(event) {
+    onPlaylistActivate($('.row.selected'))();
   });
 
 

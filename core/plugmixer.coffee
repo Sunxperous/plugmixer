@@ -3,7 +3,7 @@
 
 'use strict'
 
-VERSION = "2.2"
+VERSION = "2.2.1"
 HTML_VERSION = "2.2"
 DATE_OF_BIRTH = new Date(2014, 1, 24)
 
@@ -362,7 +362,7 @@ class Plugmixer
       FADE_DURATION   = 0.3
       FADE_OPACITY    = 0.4
       SPAN_COUNT      = 'span.count'
-      ACTIVE_CLASS    = 'icon-check-purple'
+      ACTIVE_CLASS    = 'active'
       ACTIVATE_BUTTON = '.activate-button'
       SPINNER         = '.spinner'
 
@@ -423,7 +423,9 @@ class Plugmixer
         Selections.Card.update()
         Room.save()
 
-      count: -> return parseInt(@dom.children(SPAN_COUNT).text())
+      count: ->
+        itemCountText = @dom.children(SPAN_COUNT).text()
+        return parseInt(itemCountText.substr(1, itemCountText.length - 2))
 
       disable: ->
         @enabled = false
@@ -454,7 +456,7 @@ class Plugmixer
       isActivating: ->
         return @dom.children(SPINNER).length > 0
       isActive: ->
-        return @dom.children(ACTIVATE_BUTTON).children('i.icon').eq(0).hasClass ACTIVE_CLASS
+        return @dom.children(ACTIVATE_BUTTON).children('i.icon-playlist').eq(0).hasClass ACTIVE_CLASS
 
 
   ###
